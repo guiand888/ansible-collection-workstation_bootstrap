@@ -1,11 +1,11 @@
-# Ansible Collection: guiand888.workstation
+# Ansible Collection: guiand888.workstation_bootstrap
 
-Ansible collection for configuring Fedora workstations with system optimizations, package management, and hardware support.
+Ansible collection for bootstrapping Fedora workstations with system optimizations, package management, and hardware support.
 
 ## Installation
 
 ```bash
-ansible-galaxy collection install guiand888.workstation
+ansible-galaxy collection install guiand888.workstation_bootstrap
 ```
 
 ## Requirements
@@ -55,9 +55,9 @@ ansible-galaxy collection install guiand888.workstation
   hosts: localhost
   become: true
   roles:
-    - guiand888.workstation.zram_config
-    - guiand888.workstation.packages
-    - guiand888.workstation.flatpacks
+    - guiand888.workstation_bootstrap.zram_config
+    - guiand888.workstation_bootstrap.packages
+    - guiand888.workstation_bootstrap.flatpacks
 ```
 
 ## Variables
