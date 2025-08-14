@@ -1,0 +1,213 @@
+---
+# Workstation Setup Playbook
+# Executes the guiand888.workstation_bootstrap collection to configure a Fedora workstation
+# 
+# Usage:
+#   ansible-playbook workstation-setup.yml
+#   ansible-playbook workstation-setup.yml --tags show-defaults
+
+- name: Configure Fedora Workstation
+  hosts: localhost
+  connection: local
+  become: true
+  become_method: ansible.builtin.su
+  gather_facts: true
+  vars_files:
+    - vars.yml
+    - packages_and_apps.yml
+  vars:
+    # Global enable/disable switches for automation
+    workstation_enable_system: true
+    workstation_enable_hardware: true
+    workstation_enable_packages: true
+    workstation_enable_flatpak: true
+    workstation_enable_apps: true
+    workstation_enable_crypto: true
+    workstation_enable_services: true
+
+  tasks:
+    - name: Display all role default variables
+      block:
+        - name: Load and display default variables for all roles
+          ansible.builtin.debug:
+            msg: |
+              ===========================================
+              Role: {{ item }}
+              ===========================================
+              {% if role_defaults | length > 0 %}
+              {% for var_name, var_value in role_defaults.items() %}
+              {{ var_name }}: {{ var_value }}
+              {% endfor %}
+              {% else %}
+              No default variables found or defaults file missing
+              {% endif %}
+          vars:
+            role_defaults: "{{ lookup('ansible.builtin.file', role_defaults_path, errors='ignore') | from_yaml | default({}) }}"
+            role_defaults_path: "{{ lookup('ansible.builtin.env', 'ANSIBLE_COLLECTIONS_PATHS') | default('~/.ansible/collections') | split(':') | first }}/ansible_collections/guiand888/workstation_bootstrap/roles/{{ item }}/defaults/main.yml"
+          loop:
+            - appimage_daemon
+            - aws_cli
+            - dnf_fastestmirror
+            - ffmpeg_full
+            - firefox_flatpak
+            - flatpacks
+            - flatpak_settings
+            - gnome_extensions
+            - hostname_config
+            - keyboard_config
+            - ledger_udev
+            - lid_behavior
+            - nextcloud_client
+            - packages
+            - s3_deep_sleep
+            - service_management
+            - systemd_lid_config
+            - timezone_config
+            - trezor_udev
+            - zram_config
+      tags:
+        - never
+        - show_defaults
+
+    # System Configuration Block
+    - name: System Configuration
+      when: workstation_enable_system | bool
+      tags: [system]
+      block:
+        - name: Configure ZRAM
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.zram_config
+          tags: [zram]
+
+        - name: Configure DNF fastest mirror
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.dnf_fastestmirror
+          tags: [dnf]
+
+        # - name: Configure hostname
+        #   ansible.builtin.include_role:
+        #     name: guiand888.workstation_bootstrap.hostname_config
+        #   tags: [hostname]
+
+        - name: Configure timezone
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.timezone_config
+          tags: [timezone]
+
+        - name: Configure keyboard layout
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.keyboard_config
+          tags: [keyboard]
+
+    # Hardware Configuration Block
+    - name: Hardware Configuration
+      when: workstation_enable_hardware | bool
+      tags: [hardware]
+      block:
+        - name: Configure S3 deep sleep
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.s3_deep_sleep
+          tags: [sleep]
+
+        - name: Configure lid behavior
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.lid_behavior
+          tags: [lid]
+
+        - name: Configure systemd lid settings
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.systemd_lid_config
+          tags: [lid]
+
+    # Package Installation Block
+    - name: Package Installation
+      when: workstation_enable_packages | bool
+      tags: [packages]
+      block:
+        - name: Install system packages
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.packages
+          tags: [install]
+
+        - name: Install GNOME extensions
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.gnome_extensions
+          tags: [gnome]
+
+        - name: Switch to full FFmpeg
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.ffmpeg_full
+          tags: [multimedia]
+
+    # Flatpak Configuration Block
+    - name: Flatpak Configuration
+      when: workstation_enable_flatpak | bool
+      tags: [flatpak]
+      block:
+        - name: Install Flatpak applications
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.flatpacks
+          tags: [install]
+
+        - name: Configure Flatpak settings
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.flatpak_settings
+          tags: [config]
+
+        - name: Replace Firefox RPM with Flatpak
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.firefox_flatpak
+          tags: [firefox]
+
+    # Application Configuration Block
+    - name: Application Configuration
+      when: workstation_enable_apps | bool
+      tags: [apps]
+      block:
+        - name: Configure AppImage daemon
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.appimage_daemon
+          tags: [appimage]
+
+        # - name: Install AWS CLI
+        #   ansible.builtin.include_role:
+        #     name: guiand888.workstation_bootstrap.aws_cli
+        #   tags: [aws]
+
+        - name: Configure Nextcloud client
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.nextcloud_client
+          tags: [nextcloud]
+
+    # Cryptocurrency Hardware Support Block
+    - name: Cryptocurrency Hardware Support
+      when: workstation_enable_crypto | bool
+      tags: [crypto]
+      block:
+        - name: Configure Trezor udev rules
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.trezor_udev
+          tags: [trezor]
+
+        - name: Configure Ledger udev rules
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.ledger_udev
+          tags: [ledger]
+
+    # Service Management Block
+    - name: Service Management
+      when: workstation_enable_services | bool
+      tags: [services]
+      block:
+        - name: Manage system services
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.service_management
+          tags: [management]
+
+  post_tasks:
+    - name: Display completion message
+      ansible.builtin.debug:
+        msg: |
+          Workstation setup completed successfully!
+          To view all default variables: ansible-playbook workstation-setup.yml --tags show-defaults
+          Available tags: system, hardware, packages, flatpak, apps, services, crypto

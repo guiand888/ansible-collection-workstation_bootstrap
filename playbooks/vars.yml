@@ -1,0 +1,386 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Workstation Bootstrap Collection - Environment Variables Template
+# This file contains all possible variables for the guiand888.workstation_bootstrap collection
+# Copy to ../group_vars/all.yml or ../host_vars/localhost.yml and modify as needed
+
+# =============================================================================
+# APPIMAGE DAEMON CONFIGURATION
+# =============================================================================
+# appimage_daemon_clean_old_installation: Whether to clean up old AppImage installations
+appimage_daemon_clean_old_installation: true
+
+# appimage_daemon_applications_directory: Directory to store AppImage binaries
+appimage_daemon_applications_directory: "{{ ansible_env.HOME }}/Applications"
+
+# appimage_daemon_github_repo: GitHub repository for go-appimage
+appimage_daemon_github_repo: "probonopd/go-appimage"
+
+# appimage_daemon_release_type: Release type to download ('continuous' or 'latest')
+appimage_daemon_release_type: "continuous"
+
+# appimage_daemon_binary_pattern: Pattern to match the AppImage binary name
+appimage_daemon_binary_pattern: "appimaged-.*-x86_64.AppImage"
+
+# appimage_daemon_service_enabled: Whether to enable and start the appimaged service
+appimage_daemon_service_enabled: true
+
+# appimage_daemon_run_as_user: Whether to run the service as user (vs system)
+appimage_daemon_run_as_user: true
+
+# =============================================================================
+# AWS CLI CONFIGURATION
+# =============================================================================
+# aws_cli_enable: Whether to install/update AWS CLI v2
+aws_cli_enable: true
+
+# aws_cli_remove_old_version: Whether to remove the old yum/dnf version
+aws_cli_remove_old_version: true
+
+# aws_cli_download_url: URL for AWS CLI v2 download
+aws_cli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+
+# aws_cli_download_filename: Local filename for download
+aws_cli_download_filename: "awscliv2.zip"
+
+# aws_cli_temp_dir: Temporary directory for download and extraction
+aws_cli_temp_dir: "/tmp/awscli-install"
+
+# aws_cli_bin_dir: Binary directory for AWS CLI (fallback if not detected)
+aws_cli_bin_dir: "/usr/local/bin"
+
+# aws_cli_install_dir: Installation directory for AWS CLI (fallback if not detected)
+aws_cli_install_dir: "/usr/local/aws-cli"
+
+# aws_cli_update_existing: Whether to update existing installation
+aws_cli_update_existing: true
+
+# aws_cli_force_download: Whether to always download fresh installer
+aws_cli_force_download: false
+
+# =============================================================================
+# DNF FASTESTMIRROR CONFIGURATION
+# =============================================================================
+# dnf_fastestmirror_enable: Whether to enable fastestmirror in DNF
+dnf_fastestmirror_enable: true
+
+# dnf_fastestmirror_config_file: Path to DNF configuration file
+dnf_fastestmirror_config_file: "/etc/dnf/dnf.conf"
+
+# dnf_fastestmirror_value: Value to set for fastestmirror (0=disabled, 1=enabled)
+dnf_fastestmirror_value: "1"
+
+# =============================================================================
+# FFMPEG FULL CONFIGURATION
+# =============================================================================
+# ffmpeg_full_swap_packages: Whether to swap ffmpeg-free with full ffmpeg
+ffmpeg_full_swap_packages: true
+
+# ffmpeg_full_update_multimedia_groups: Whether to update multimedia and sound-video groups
+ffmpeg_full_update_multimedia_groups: true
+
+# ffmpeg_full_exclude_packagekit: Whether to exclude PackageKit-gstreamer-plugin during group updates
+ffmpeg_full_exclude_packagekit: true
+
+# ffmpeg_full_install_weak_deps: Whether to install weak dependencies during group updates
+ffmpeg_full_install_weak_deps: false
+
+# =============================================================================
+# FIREFOX FLATPAK CONFIGURATION
+# =============================================================================
+# firefox_flatpak_remove_rpm: Whether to remove the Firefox RPM package
+firefox_flatpak_remove_rpm: true
+
+# firefox_flatpak_install_flatpak: Whether to install the Firefox Flatpak
+firefox_flatpak_install_flatpak: true
+
+# firefox_flatpak_install_method: Installation method for Flatpak ('user' or 'system')
+firefox_flatpak_install_method: "user"
+
+# firefox_flatpak_package_name: The Flatpak package name for Firefox
+firefox_flatpak_package_name: "org.mozilla.firefox"
+
+# firefox_flatpak_migrate_profile: Whether to migrate profiles from RPM to Flatpak location
+firefox_flatpak_migrate_profile: true
+
+# firefox_flatpak_rpm_profile_path: Path to RPM Firefox profiles
+firefox_flatpak_rpm_profile_path: "{{ ansible_env.HOME }}/.mozilla/firefox"
+
+# firefox_flatpak_flatpak_profile_path: Path to Flatpak Firefox profiles
+firefox_flatpak_flatpak_profile_path: "{{ ansible_env.HOME }}/.var/app/org.mozilla.firefox/.mozilla/firefox"
+
+# =============================================================================
+# FLATPACKS CONFIGURATION
+# =============================================================================
+# flatpacks_install_method_default: Default installation method ('user' or 'system')
+flatpacks_install_method_default: "user"
+
+# flatpacks_packages_to_install: List of Flatpak packages to install
+# Example:
+# flatpacks_packages_to_install:
+#   - name: "org.gnome.Calculator"
+#     method: "user"  # Optional: overrides default method
+#   - name: "org.libreoffice.LibreOffice"
+
+# =============================================================================
+# FLATPAK SETTINGS CONFIGURATION
+# =============================================================================
+# flatpak_settings_enable: Whether to configure Flatpak settings
+flatpak_settings_enable: true
+
+# flatpak_settings_extra_languages: List of additional languages to configure
+flatpak_settings_extra_languages:
+  - "fr"
+
+# flatpak_settings_evolution_config: Whether to configure Evolution settings
+flatpak_settings_evolution_config: true
+
+# flatpak_settings_evolution_composer_localized_re: Localized reply prefixes for Evolution
+flatpak_settings_evolution_composer_localized_re: "AW,SV"
+
+# =============================================================================
+# GNOME EXTENSIONS CONFIGURATION
+# =============================================================================
+# gnome_extensions_extensions_to_install: List of GNOME extensions to install
+# Example:
+# gnome_extensions_extensions_to_install:
+#   - extension_id: "5"
+#     name: "AlternateTab"
+#   - extension_id: "7"
+#     name: "Removable Drive Menu"
+
+# =============================================================================
+# HOSTNAME CONFIGURATION
+# =============================================================================
+# hostname_config_hostname: System hostname to set (leave empty to prompt)
+hostname_config_hostname: ""
+
+# hostname_config_enable: Whether to configure hostname
+hostname_config_enable: true
+
+# hostname_config_prompt: Whether to prompt for hostname if not set
+hostname_config_prompt: true
+
+# =============================================================================
+# KEYBOARD CONFIGURATION
+# =============================================================================
+# keyboard_config_enable: Whether to configure keyboard and locale settings
+keyboard_config_enable: true
+
+# keyboard_config_locale: System locale to set
+keyboard_config_locale: "en_SG.UTF-8"
+
+# keyboard_config_x11_layout: X11 keyboard layout(s)
+keyboard_config_x11_layout: "us,cn"
+
+# keyboard_config_x11_model: X11 keyboard model
+keyboard_config_x11_model: "pc105"
+
+# keyboard_config_x11_variant: X11 keyboard variant(s)
+keyboard_config_x11_variant: "intl,"
+
+# keyboard_config_console_keymap: Console keymap
+keyboard_config_console_keymap: "us"
+
+# =============================================================================
+# LEDGER UDEV CONFIGURATION
+# =============================================================================
+# ledger_udev_enable: Whether to install Ledger udev rules
+ledger_udev_enable: true
+
+# ledger_udev_rules_url: URL for Ledger udev rules installation script
+ledger_udev_rules_url: "https://raw.githubusercontent.com/LedgerHQ/udev-rules/master/add_udev_rules.sh"
+
+# ledger_udev_rules_path: Local path for udev rules file
+ledger_udev_rules_path: "/etc/udev/rules.d/20-hw1.rules"
+
+# ledger_udev_backup_existing: Whether to backup existing rules file
+ledger_udev_backup_existing: true
+
+# ledger_udev_reload_rules: Whether to reload udev rules after installation
+ledger_udev_reload_rules: true
+
+# ledger_udev_ubuntu_enable_universe: Whether to enable universe repository on Ubuntu
+ledger_udev_ubuntu_enable_universe: true
+
+# ledger_udev_ubuntu_install_fuse: Whether to install libfuse3-3 package on Ubuntu
+ledger_udev_ubuntu_install_fuse: true
+
+# =============================================================================
+# LID BEHAVIOR CONFIGURATION
+# =============================================================================
+# lid_behavior_enable: Whether to configure lid behavior
+lid_behavior_enable: true
+
+# lid_behavior_config_file: Path to systemd logind configuration
+lid_behavior_config_file: "/etc/systemd/logind.conf"
+
+# lid_behavior_handle_lid_switch: Action when lid is closed
+lid_behavior_handle_lid_switch: "suspend"
+
+# lid_behavior_handle_lid_switch_external_power: Action when lid closed on external power
+lid_behavior_handle_lid_switch_external_power: "suspend"
+
+# lid_behavior_handle_lid_switch_docked: Action when lid closed while docked
+lid_behavior_handle_lid_switch_docked: "suspend"
+
+# =============================================================================
+# NEXTCLOUD CLIENT CONFIGURATION
+# =============================================================================
+# nextcloud_client_enable: Whether to configure Nextcloud client
+nextcloud_client_enable: true
+
+# nextcloud_client_install: Whether to install Nextcloud client if not present
+nextcloud_client_install: true
+
+# nextcloud_client_package_name: Package name for Nextcloud client
+nextcloud_client_package_name: "nextcloud-client"
+
+# nextcloud_client_metered_pause: Whether to enable metered network pause functionality
+nextcloud_client_metered_pause: true
+
+# nextcloud_client_script_dir: Directory to store the metered network script
+nextcloud_client_script_dir: "/usr/local/bin"
+
+# nextcloud_client_script_name: Name of the metered network monitoring script
+nextcloud_client_script_name: "nextcloud-metered-monitor"
+
+# nextcloud_client_service_name: Name of the systemd user service
+nextcloud_client_service_name: "nextcloud-metered-monitor"
+
+# nextcloud_client_check_interval: Interval in seconds to check network status
+nextcloud_client_check_interval: 30
+
+# nextcloud_client_log_file: Log file for the monitoring script
+nextcloud_client_log_file: "$HOME/.local/share/nextcloud-metered-monitor.log"
+
+# nextcloud_client_config_dir: Nextcloud client configuration directory
+nextcloud_client_config_dir: "$HOME/.config/Nextcloud"
+
+# =============================================================================
+# PACKAGES CONFIGURATION
+# =============================================================================
+# packages_packages_to_install: List of system packages to install
+packages_packages_to_install: []
+
+# Example:
+# packages_packages_to_install:
+#   - htop
+#   - vim
+#   - git
+
+# =============================================================================
+# S3 DEEP SLEEP CONFIGURATION
+# =============================================================================
+# s3_deep_sleep_enable: Whether to enable S3 deep sleep mode
+s3_deep_sleep_enable: true
+
+# s3_deep_sleep_mem_sleep_path: Path to the mem_sleep sysfs file
+s3_deep_sleep_mem_sleep_path: "/sys/power/mem_sleep"
+
+# s3_deep_sleep_mode: Sleep mode to configure ('deep', 's2idle', 'shallow')
+s3_deep_sleep_mode: "deep"
+
+# s3_deep_sleep_update_grub: Whether to update GRUB configuration after change
+s3_deep_sleep_update_grub: true
+
+# s3_deep_sleep_grub_config_path: Path to GRUB configuration file
+s3_deep_sleep_grub_config_path: "/boot/efi/EFI/fedora/grub.cfg"
+
+# s3_deep_sleep_check_current: Whether to check current setting before applying
+s3_deep_sleep_check_current: true
+
+# =============================================================================
+# SERVICE MANAGEMENT CONFIGURATION
+# =============================================================================
+# service_management_services: List of services to manage
+service_management_services:
+  - name: teamviewerd
+    enabled: false
+    state: stopped
+    description: "TeamViewer daemon (disabled for battery savings)"
+
+# service_management_ignore_missing: Whether to continue if a service doesn't exist
+service_management_ignore_missing: true
+
+# =============================================================================
+# SYSTEMD LID CONFIG CONFIGURATION
+# =============================================================================
+# systemd_lid_config_default_action: Default action for all lid-closing scenarios
+systemd_lid_config_default_action: "suspend"
+
+# systemd_lid_config_actions: Mapping of lid-switch scenarios to desired actions
+systemd_lid_config_actions:
+  handle_lid_switch: "{{ systemd_lid_config_default_action }}"
+  handle_lid_switch_external_power: "{{ systemd_lid_config_default_action }}"
+  handle_lid_switch_docked: "ignore"
+
+# =============================================================================
+# TIMEZONE CONFIGURATION
+# =============================================================================
+# timezone_config_timezone: System timezone to set
+timezone_config_timezone: "Asia/Singapore"
+
+# timezone_config_enable: Whether to configure timezone
+timezone_config_enable: true
+
+# =============================================================================
+# TREZOR UDEV CONFIGURATION
+# =============================================================================
+# trezor_udev_enable: Whether to install Trezor udev rules
+trezor_udev_enable: true
+
+# trezor_udev_rules_url: URL for official Trezor udev rules
+trezor_udev_rules_url: "https://data.trezor.io/udev/51-trezor.rules"
+
+# trezor_udev_rules_path: Local path for udev rules file
+trezor_udev_rules_path: "/etc/udev/rules.d/51-trezor.rules"
+
+# trezor_udev_backup_existing: Whether to backup existing rules file
+trezor_udev_backup_existing: true
+
+# trezor_udev_reload_rules: Whether to reload udev rules after installation
+trezor_udev_reload_rules: true
+
+# =============================================================================
+# ZRAM CONFIGURATION
+# =============================================================================
+# zram_config_enable: Whether to enable ZRAM configuration
+zram_config_enable: true
+
+# zram_config_install_packages: Whether to install ZRAM packages if not present
+zram_config_install_packages: true
+
+# zram_config_packages: List of packages to install for ZRAM support
+zram_config_packages:
+  - zram
+
+# zram_config_file_path: Path to the ZRAM generator configuration file
+zram_config_file_path: "/etc/systemd/zram-generator.conf"
+
+# zram_config_device_name: Name of the ZRAM device to configure
+zram_config_device_name: "zram0"
+
+# zram_config_fraction: Fraction of system RAM to use for ZRAM (0.0-1.0)
+zram_config_fraction: 0.8
+
+# zram_config_max_size_mb: Maximum size in MB for ZRAM device
+zram_config_max_size_mb: 13107
+
+# zram_config_restart_service: Whether to restart the ZRAM service after configuration
+zram_config_restart_service: true
+
+# zram_config_service_name: Name of the systemd service for ZRAM setup
+zram_config_service_name: "systemd-zram-setup@{{ zram_config_device_name }}.service"
+
+# zram_config_configure_sysctl: Whether to configure related sysctl parameters
+zram_config_configure_sysctl: true
+
+# zram_config_oom_kill_allocating_task: Make OOM killer more aggressive
+zram_config_oom_kill_allocating_task: 1
+
+# zram_config_vfs_cache_pressure: Aggressively reclaim filesystem metadata cache
+zram_config_vfs_cache_pressure: 500
+
+# zram_config_swappiness: How aggressively the kernel swaps memory to swap space (0-200)
+zram_config_swappiness: 100
