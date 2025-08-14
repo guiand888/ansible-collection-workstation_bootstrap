@@ -1,0 +1,54 @@
+---
+# Child task file: setup_aliases.yml
+# This file handles the optional setup of shell aliases for convenience
+
+- name: Check if shell configuration file exists
+  ansible.builtin.stat:
+    path: "{{ ansible_vault_bitwarden_shell_config_file }}"
+  register: shell_config_stat
+
+- name: Display shell configuration file status
+  ansible.builtin.debug:
+    msg: >
+      Shell config file {{ ansible_vault_bitwarden_shell_config_file }}
+      {{ 'exists' if shell_config_stat.stat.exists
+      else 'does not exist, will be created' }}
+
+- name: Ensure shell configuration file exists
+  ansible.builtin.file:
+    path: "{{ ansible_vault_bitwarden_shell_config_file }}"
+    state: touch
+    mode: '0644'
+  when: not shell_config_stat.stat.exists
+
+- name: Check if Bitwarden aliases already exist
+  ansible.builtin.lineinfile:
+    path: "{{ ansible_vault_bitwarden_shell_config_file }}"
+    regexp: '^alias bw-unlock='
+    state: absent
+  check_mode: true
+  register: alias_check
+  changed_when: false
+
+- name: Add Bitwarden convenience aliases to shell configuration
+  ansible.builtin.blockinfile:
+    path: "{{ ansible_vault_bitwarden_shell_config_file }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - Bitwarden ansible-vault aliases"
+    block: |
+      # Bitwarden convenience aliases for ansible-vault integration
+      alias bw-unlock='export BW_SESSION=$(bw unlock | grep -oP "BW_SESSION=\"\K[^\"]+" | head -n 1)'
+      alias ansible-vault-bw='{{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh'
+      alias ansible-playbook-bw='ansible-playbook --vault-password-file {{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh'
+    create: true
+    mode: '0644'
+  register: aliases_added
+
+- name: Display alias installation result
+  ansible.builtin.debug:
+    msg: >
+      Bitwarden aliases {{ 'added successfully' if aliases_added is changed
+      else 'already configured' }}
+      in {{ ansible_vault_bitwarden_shell_config_file }}.
+      {% if aliases_added is changed %}Restart your shell or run
+      'source {{ ansible_vault_bitwarden_shell_config_file }}' to use them.
+      {% endif %}

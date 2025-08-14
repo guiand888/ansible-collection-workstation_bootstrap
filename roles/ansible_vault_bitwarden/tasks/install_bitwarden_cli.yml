@@ -1,0 +1,69 @@
+---
+# Child task file: install_bitwarden_cli.yml
+# This file handles the installation of Bitwarden CLI following the README instructions
+
+- name: Ensure installation directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_vault_bitwarden_cli_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if Bitwarden CLI is already installed
+  ansible.builtin.stat:
+    path: "{{ ansible_vault_bitwarden_cli_install_dir }}/bw"
+  register: bw_cli_stat
+
+- name: Display current Bitwarden CLI installation status
+  ansible.builtin.debug:
+    msg: "Bitwarden CLI {{ 'already installed' if bw_cli_stat.stat.exists else 'not found, proceeding with installation' }}"
+
+- name: Create temporary directory for Bitwarden CLI download
+  ansible.builtin.file:
+    path: "{{ ansible_vault_bitwarden_cli_temp_dir }}"
+    state: directory
+    mode: '0755'
+  when: not bw_cli_stat.stat.exists
+
+- name: Download Bitwarden CLI zip file
+  ansible.builtin.get_url:
+    url: "{{ ansible_vault_bitwarden_cli_url }}"
+    dest: "{{ ansible_vault_bitwarden_cli_temp_dir }}/bw-cli.zip"
+    mode: '0644'
+  when: not bw_cli_stat.stat.exists
+  register: bw_cli_downloaded
+
+- name: Extract Bitwarden CLI binary
+  ansible.builtin.unarchive:
+    src: "{{ ansible_vault_bitwarden_cli_temp_dir }}/bw-cli.zip"
+    dest: "{{ ansible_vault_bitwarden_cli_temp_dir }}"
+    remote_src: true
+  when: not bw_cli_stat.stat.exists
+
+- name: Install Bitwarden CLI binary
+  ansible.builtin.copy:
+    src: "{{ ansible_vault_bitwarden_cli_temp_dir }}/bw"
+    dest: "{{ ansible_vault_bitwarden_cli_install_dir }}/bw"
+    mode: '0755'
+    remote_src: true
+  when: not bw_cli_stat.stat.exists
+  register: bw_cli_installed
+
+- name: Verify Bitwarden CLI installation
+  ansible.builtin.command:
+    cmd: "{{ ansible_vault_bitwarden_cli_install_dir }}/bw --version"
+  register: bw_version_check
+  changed_when: false
+  when: bw_cli_installed is changed or bw_cli_stat.stat.exists
+
+- name: Display Bitwarden CLI installation result
+  ansible.builtin.debug:
+    msg: >
+      Bitwarden CLI {{ 'installed successfully' if bw_cli_installed is changed
+      else 'already up-to-date' }}: {{ bw_version_check.stdout
+      if bw_version_check is defined else 'version check skipped' }}
+
+- name: Clean up temporary directory
+  ansible.builtin.file:
+    path: "{{ ansible_vault_bitwarden_cli_temp_dir }}"
+    state: absent
+  when: not bw_cli_stat.stat.exists

@@ -44,6 +44,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `appimage_daemon` - Configure AppImage daemon
 - `aws_cli` - Install AWS CLI v2
 - `nextcloud_client` - Configure Nextcloud client
+- `ansible_vault_bitwarden` - Install Bitwarden CLI and ansible-vault integration
 
 ### Service Management
 - `service_management` - Manage systemd services

@@ -1,0 +1,40 @@
+---
+# Child task file: install_script.yml
+# This file handles the installation of ansible-vault-bw.sh script
+
+- name: Ensure script installation directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_vault_bitwarden_script_install_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if ansible-vault-bw script is already installed
+  ansible.builtin.stat:
+    path: "{{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh"
+  register: script_stat
+
+- name: Display ansible-vault-bw script installation status
+  ansible.builtin.debug:
+    msg: "ansible-vault-bw script {{ 'already installed' if script_stat.stat.exists else 'not found, proceeding with download' }}"
+
+- name: Download ansible-vault-bw script
+  ansible.builtin.get_url:
+    url: "{{ ansible_vault_bitwarden_script_url }}"
+    dest: "{{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh"
+    mode: '0755'
+    force: true
+  register: script_downloaded
+
+- name: Verify script installation and functionality
+  ansible.builtin.command:
+    cmd: "{{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh --help"
+  register: script_help_check
+  failed_when: false
+  changed_when: false
+
+- name: Display script installation result
+  ansible.builtin.debug:
+    msg: >
+      ansible-vault-bw script {{ 'installed successfully'
+      if script_downloaded is changed else 'already up-to-date' }}
+      at {{ ansible_vault_bitwarden_script_install_dir }}/ansible-vault-bw.sh

@@ -5,6 +5,41 @@
 # Copy to ../group_vars/all.yml or ../host_vars/localhost.yml and modify as needed
 
 # =============================================================================
+# ANSIBLE VAULT BITWARDEN CONFIGURATION
+# =============================================================================
+# ansible_vault_bitwarden_enable: Whether to install Bitwarden CLI and script
+ansible_vault_bitwarden_enable: true
+
+# ansible_vault_bitwarden_cli_version: Version of Bitwarden CLI to install
+ansible_vault_bitwarden_cli_version: "2025.7.0"
+
+# ansible_vault_bitwarden_cli_url: URL for Bitwarden CLI download
+ansible_vault_bitwarden_cli_url: >
+  https://github.com/bitwarden/clients/releases/download/cli-v
+  {{ ansible_vault_bitwarden_cli_version }}/bw-oss-linux-
+  {{ ansible_vault_bitwarden_cli_version }}.zip
+
+# ansible_vault_bitwarden_cli_install_dir: Directory to install Bitwarden CLI
+ansible_vault_bitwarden_cli_install_dir: "{{ ansible_env.HOME }}/.local/bin"
+
+# ansible_vault_bitwarden_cli_temp_dir: Temporary directory for installation
+ansible_vault_bitwarden_cli_temp_dir: "/tmp/ansible-vault-bitwarden-install"
+
+# ansible_vault_bitwarden_script_url: URL for ansible-vault-bw script
+ansible_vault_bitwarden_script_url: >
+  https://raw.githubusercontent.com/guiand888/ansible-vault-bitwarden/
+  main/ansible-vault-bw.sh
+
+# ansible_vault_bitwarden_script_install_dir: Directory to install the script
+ansible_vault_bitwarden_script_install_dir: "{{ ansible_env.HOME }}/.local/bin"
+
+# ansible_vault_bitwarden_aliases_enable: Whether to enable shell aliases
+ansible_vault_bitwarden_aliases_enable: false
+
+# ansible_vault_bitwarden_shell_config_file: Shell configuration file for aliases
+ansible_vault_bitwarden_shell_config_file: "{{ ansible_env.HOME }}/.zshrc"
+
+# =============================================================================
 # APPIMAGE DAEMON CONFIGURATION
 # =============================================================================
 # appimage_daemon_clean_old_installation: Whether to clean up old AppImage installations

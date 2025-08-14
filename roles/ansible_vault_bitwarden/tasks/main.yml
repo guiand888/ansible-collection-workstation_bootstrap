@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for ansible_vault_bitwarden
+
+- name: Include tasks to install Bitwarden CLI
+  ansible.builtin.include_tasks: install_bitwarden_cli.yml
+  when: ansible_vault_bitwarden_enable | bool
+
+- name: Include tasks to install ansible-vault-bw script
+  ansible.builtin.include_tasks: install_script.yml
+  when: ansible_vault_bitwarden_enable | bool
+
+- name: Include tasks to setup shell aliases
+  ansible.builtin.include_tasks: setup_aliases.yml
+  when:
+    - ansible_vault_bitwarden_enable | bool
+    - ansible_vault_bitwarden_aliases_enable | bool

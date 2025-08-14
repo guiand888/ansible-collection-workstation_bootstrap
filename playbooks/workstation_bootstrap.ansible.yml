@@ -45,6 +45,7 @@
             role_defaults: "{{ lookup('ansible.builtin.file', role_defaults_path, errors='ignore') | from_yaml | default({}) }}"
             role_defaults_path: "{{ lookup('ansible.builtin.env', 'ANSIBLE_COLLECTIONS_PATHS') | default('~/.ansible/collections') | split(':') | first }}/ansible_collections/guiand888/workstation_bootstrap/roles/{{ item }}/defaults/main.yml"
           loop:
+            - ansible_vault_bitwarden
             - appimage_daemon
             - aws_cli
             - dnf_fastestmirror
@@ -178,6 +179,11 @@
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.nextcloud_client
           tags: [nextcloud]
+
+        - name: Install Bitwarden CLI and ansible-vault integration
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.ansible_vault_bitwarden
+          tags: [bitwarden, vault]
 
     # Cryptocurrency Hardware Support Block
     - name: Cryptocurrency Hardware Support
