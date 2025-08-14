@@ -1,0 +1,76 @@
+---
+# Child task file: install_udev_rules.yml
+# This file handles installation of Trezor hardware wallet udev rules
+
+- name: Check if Trezor udev rules already exist
+  ansible.builtin.stat:
+    path: "{{ trezor_udev_rules_path }}"
+  register: trezor_udev_existing_rules
+
+- name: Display current udev rules status
+  ansible.builtin.debug:
+    msg: "{{ 'Trezor udev rules already exist' if trezor_udev_existing_rules.stat.exists else 'Trezor udev rules not found, will install' }}"
+
+- name: Backup existing Trezor udev rules
+  ansible.builtin.copy:
+    src: "{{ trezor_udev_rules_path }}"
+    dest: "{{ trezor_udev_rules_path }}.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+  become: true
+  when: 
+    - trezor_udev_existing_rules.stat.exists
+    - trezor_udev_backup_existing | bool
+  register: trezor_udev_backup_result
+
+- name: Display backup status
+  ansible.builtin.debug:
+    msg: "Existing rules backed up to {{ trezor_udev_rules_path }}.backup.{{ ansible_date_time.epoch }}"
+  when: trezor_udev_backup_result is changed
+
+- name: Download Trezor udev rules from official source
+  ansible.builtin.get_url:
+    url: "{{ trezor_udev_rules_url }}"
+    dest: "{{ trezor_udev_rules_path }}"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  register: trezor_udev_download_result
+  
+- name: Reload udev rules
+  ansible.builtin.command:
+    cmd: udevadm control --reload-rules
+  become: true
+  when: 
+    - trezor_udev_reload_rules | bool
+    - trezor_udev_download_result is changed
+  register: trezor_udev_reload_result
+
+- name: Trigger udev
+  ansible.builtin.command:
+    cmd: udevadm trigger
+  become: true
+  when: 
+    - trezor_udev_reload_rules | bool
+    - trezor_udev_download_result is changed
+  register: trezor_udev_trigger_result
+
+- name: Display installation success
+  ansible.builtin.debug:
+    msg: "Trezor udev rules installed successfully from {{ trezor_udev_rules_url }}"
+  when: trezor_udev_download_result is changed
+
+- name: Display already up-to-date message
+  ansible.builtin.debug:
+    msg: "Trezor udev rules already present: {{ trezor_udev_rules_path }}"
+  when: trezor_udev_download_result is not changed
+
+- name: Verify udev rules file
+  ansible.builtin.stat:
+    path: "{{ trezor_udev_rules_path }}"
+  register: trezor_udev_verify
+
+- name: Display verification result
+  ansible.builtin.debug:
+    msg: "Trezor udev rules verified: {{ trezor_udev_rules_path }} ({{ trezor_udev_verify.stat.size }} bytes)"
+  when: trezor_udev_verify.stat.exists

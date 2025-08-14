@@ -1,0 +1,15 @@
+---
+# defaults file for systemd_lid_config
+
+# systemd_lid_config_default_action: The default action for all lid-closing scenarios.
+# This variable sets the default behavior ('suspend', 'ignore', 'poweroff', 'hibernate', 'kexec', 'lock').
+# Individual lid-switch behaviors can override this if explicitly set in `vars/main.yml` or playbook.
+systemd_lid_config_default_action: "suspend"
+
+# systemd_lid_config_actions: A mapping of lid-switch scenarios to desired actions.
+# If a scenario is not listed here, it will default to `systemd_lid_config_default_action`.
+# These can be overridden in `vars/main.yml` or a playbook.
+systemd_lid_config_actions:
+  handle_lid_switch: "{{ systemd_lid_config_default_action }}"
+  handle_lid_switch_external_power: "{{ systemd_lid_config_default_action }}"
+  handle_lid_switch_docked: "ignore"

@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for lid_behavior
+
+- name: Include tasks to configure lid behavior
+  ansible.builtin.include_tasks: configure_lid.ansible.yml
+  when: lid_behavior_enable | bool

@@ -1,0 +1,12 @@
+---
+
+- name: Include tasks to install packages on Fedora
+  ansible.builtin.include_tasks: install_packages.ansible.yml
+  when: ansible_facts['distribution'] == 'Fedora'
+
+- name: Fail if operating system is not Fedora
+  ansible.builtin.fail:
+    msg: "This role is currently supported only on Fedora. Detected OS: {{ ansible_facts['distribution'] }}."
+  when: ansible_facts['distribution'] != 'Fedora'
+  # This task explicitly fails the playbook if the OS is not Fedora,
+  # providing a clear error message as originally intended by the assert.

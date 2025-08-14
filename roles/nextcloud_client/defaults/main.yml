@@ -1,0 +1,33 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for nextcloud_client
+
+# nextcloud_client_enable: Whether to configure Nextcloud client
+nextcloud_client_enable: true
+
+# nextcloud_client_install: Whether to install Nextcloud client if not present
+nextcloud_client_install: true
+
+# nextcloud_client_package_name: Package name for Nextcloud client
+nextcloud_client_package_name: "nextcloud-client"
+
+# nextcloud_client_metered_pause: Whether to enable metered network pause functionality
+nextcloud_client_metered_pause: true
+
+# nextcloud_client_script_dir: Directory to store the metered network script
+nextcloud_client_script_dir: "/usr/local/bin"
+
+# nextcloud_client_script_name: Name of the metered network monitoring script
+nextcloud_client_script_name: "nextcloud-metered-monitor"
+
+# nextcloud_client_service_name: Name of the systemd user service
+nextcloud_client_service_name: "nextcloud-metered-monitor"
+
+# nextcloud_client_check_interval: Interval in seconds to check network status
+nextcloud_client_check_interval: 30
+
+# nextcloud_client_log_file: Log file for the monitoring script
+nextcloud_client_log_file: "$HOME/.local/share/nextcloud-metered-monitor.log"
+
+# nextcloud_client_config_dir: Nextcloud client configuration directory
+nextcloud_client_config_dir: "$HOME/.config/Nextcloud"

@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for s3_deep_sleep
+
+# s3_deep_sleep_enable: Whether to enable S3 deep sleep mode
+s3_deep_sleep_enable: true
+
+# s3_deep_sleep_mem_sleep_path: Path to the mem_sleep sysfs file
+s3_deep_sleep_mem_sleep_path: "/sys/power/mem_sleep"
+
+# s3_deep_sleep_mode: Sleep mode to configure ('deep', 's2idle', 'shallow')
+s3_deep_sleep_mode: "deep"
+
+# s3_deep_sleep_update_grub: Whether to update GRUB configuration after change
+s3_deep_sleep_update_grub: true
+
+# s3_deep_sleep_grub_config_path: Path to GRUB configuration file
+s3_deep_sleep_grub_config_path: "/boot/efi/EFI/fedora/grub.cfg"
+
+# s3_deep_sleep_check_current: Whether to check current setting before applying
+s3_deep_sleep_check_current: true

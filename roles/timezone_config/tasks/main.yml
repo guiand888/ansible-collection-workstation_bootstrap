@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for timezone_config
+
+- name: Configure system timezone
+  community.general.timezone:
+    name: "{{ timezone_config_timezone }}"
+  become: true
+  when: timezone_config_enable | bool
+  register: timezone_changed
+
+- name: Display timezone configuration message
+  ansible.builtin.debug:
+    msg: "System timezone configured to {{ timezone_config_timezone }}"
+  when: timezone_changed is changed

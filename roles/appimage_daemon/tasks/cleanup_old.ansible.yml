@@ -1,0 +1,33 @@
+---
+# Child task file: cleanup_old.ansible.yml
+# This file handles cleanup of old AppImage installations and conflicting packages
+
+- name: Stop existing appimaged service if running
+  ansible.builtin.systemd:
+    name: appimaged.service
+    state: stopped
+    enabled: false
+    scope: user
+  failed_when: false
+  # Don't fail if service doesn't exist
+
+- name: Remove conflicting appimagelauncher package if present
+  ansible.builtin.package:
+    name: appimagelauncher
+    state: absent
+  become: true
+  failed_when: false
+  # Don't fail if package is not installed
+
+- name: Remove AppImage leftover files from .local directory
+  ansible.builtin.shell:
+    cmd: rm -f {{ ansible_env.HOME }}/.local/share/applications/appimage*
+  failed_when: false
+  # Don't fail if files don't exist
+
+- name: Remove AppImage leftover systemd service files
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/systemd/user/default.target.wants/appimagelauncherd.service"
+    state: absent
+  failed_when: false
+  # Don't fail if file doesn't exist

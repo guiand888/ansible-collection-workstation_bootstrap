@@ -1,0 +1,14 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for service_management
+
+# service_management_services: List of services to manage
+# Each service entry should have: name, enabled, state
+service_management_services:
+  - name: teamviewerd
+    enabled: false
+    state: stopped
+    description: "TeamViewer daemon (disabled for battery savings)"
+
+# service_management_ignore_missing: Whether to continue if a service doesn't exist
+service_management_ignore_missing: true

@@ -1,0 +1,64 @@
+---
+# Child task file: install_daemon.ansible.yml
+# This file handles the installation of the go-appimage daemon
+
+- name: Create Applications directory
+  ansible.builtin.file:
+    path: "{{ appimage_daemon_applications_directory }}"
+    state: directory
+    mode: '0755'
+
+- name: Get latest AppImage daemon release information
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/{{ appimage_daemon_github_repo }}/releases/{{ appimage_daemon_release_type }}"
+    method: GET
+    return_content: true
+  register: release_info
+
+- name: Extract AppImage download URL
+  ansible.builtin.set_fact:
+    appimage_download_url: "{{ item.browser_download_url }}"
+  loop: "{{ release_info.json.assets }}"
+  when: item.name is match(appimage_daemon_binary_pattern)
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Extract AppImage filename
+  ansible.builtin.set_fact:
+    appimage_filename: "{{ appimage_download_url | basename }}"
+  when: appimage_download_url is defined
+
+- name: Check if AppImage already exists
+  ansible.builtin.stat:
+    path: "{{ appimage_daemon_applications_directory }}/{{ appimage_filename }}"
+  register: appimage_exists
+  when: appimage_filename is defined
+
+- name: Download AppImage daemon
+  ansible.builtin.get_url:
+    url: "{{ appimage_download_url }}"
+    dest: "{{ appimage_daemon_applications_directory }}/{{ appimage_filename }}"
+    mode: '0755'
+  when: 
+    - appimage_download_url is defined
+    - appimage_filename is defined
+    - not appimage_exists.stat.exists
+  register: appimage_downloaded
+
+- name: Execute AppImage for first-time setup
+  ansible.builtin.command:
+    cmd: "{{ appimage_daemon_applications_directory }}/{{ appimage_filename }}"
+  when: 
+    - appimage_filename is defined
+    - appimage_downloaded is changed
+  register: appimage_first_run
+  failed_when: false
+  # First run might exit with non-zero code but still succeed
+
+- name: Enable and start appimaged systemd service
+  ansible.builtin.systemd:
+    name: appimaged.service
+    enabled: "{{ appimage_daemon_service_enabled }}"
+    state: "{{ 'started' if appimage_daemon_service_enabled else 'stopped' }}"
+    scope: "{{ 'user' if appimage_daemon_run_as_user else 'system' }}"
+  when: appimage_filename is defined

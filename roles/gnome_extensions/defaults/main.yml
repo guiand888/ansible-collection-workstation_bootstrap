@@ -1,0 +1,5 @@
+---
+# defaults file for gnome_extensions
+
+# No specific defaults needed for this role beyond the list of extensions.
+# The `gnome_extensions_extensions_to_install` variable is expected to be defined by the user.

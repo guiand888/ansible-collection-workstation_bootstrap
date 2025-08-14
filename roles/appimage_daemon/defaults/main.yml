@@ -1,0 +1,24 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for appimage_daemon
+
+# appimage_daemon_clean_old_installation: Whether to clean up old AppImage installations
+appimage_daemon_clean_old_installation: true
+
+# appimage_daemon_applications_directory: Directory to store AppImage binaries
+appimage_daemon_applications_directory: "{{ ansible_env.HOME }}/Applications"
+
+# appimage_daemon_github_repo: GitHub repository for go-appimage
+appimage_daemon_github_repo: "probonopd/go-appimage"
+
+# appimage_daemon_release_type: Release type to download ('continuous' or 'latest')
+appimage_daemon_release_type: "continuous"
+
+# appimage_daemon_binary_pattern: Pattern to match the AppImage binary name
+appimage_daemon_binary_pattern: "appimaged-.*-x86_64.AppImage"
+
+# appimage_daemon_service_enabled: Whether to enable and start the appimaged service
+appimage_daemon_service_enabled: true
+
+# appimage_daemon_run_as_user: Whether to run the service as user (vs system)
+appimage_daemon_run_as_user: true

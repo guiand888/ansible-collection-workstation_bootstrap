@@ -1,0 +1,34 @@
+---
+# Child task file: configure_fastestmirror.ansible.yml
+# This file handles the configuration of DNF fastest mirror functionality
+
+- name: Check if DNF configuration file exists
+  ansible.builtin.stat:
+    path: "{{ dnf_fastestmirror_config_file }}"
+  register: dnf_config_stat
+
+- name: Configure DNF fastest mirror setting
+  ansible.builtin.lineinfile:
+    path: "{{ dnf_fastestmirror_config_file }}"
+    regexp: '^fastestmirror='
+    line: "fastestmirror={{ dnf_fastestmirror_value }}"
+    state: present
+    create: false
+  become: true
+  when: dnf_config_stat.stat.exists
+  register: fastestmirror_configured
+
+- name: Display configuration completion message
+  ansible.builtin.debug:
+    msg: "DNF fastest mirror enabled in {{ dnf_fastestmirror_config_file }}"
+  when: fastestmirror_configured is changed
+
+- name: Display no-change message
+  ansible.builtin.debug:
+    msg: "DNF fastest mirror already configured"
+  when: fastestmirror_configured is not changed and dnf_config_stat.stat.exists
+
+- name: Display warning if DNF config file not found
+  ansible.builtin.debug:
+    msg: "Warning: DNF configuration file {{ dnf_fastestmirror_config_file }} not found - skipping fastest mirror configuration"
+  when: not dnf_config_stat.stat.exists

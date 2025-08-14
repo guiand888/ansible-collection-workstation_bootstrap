@@ -1,0 +1,32 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for hostname_config
+
+- name: Prompt for hostname if not provided
+  ansible.builtin.pause:
+    prompt: "Enter the hostname for this system: "
+  register: hostname_input
+  when: 
+    - hostname_config_enable | bool
+    - hostname_config_hostname == ""
+    - hostname_config_prompt | bool
+
+- name: Set hostname variable
+  ansible.builtin.set_fact:
+    final_hostname: "{{ hostname_config_hostname if hostname_config_hostname != '' else hostname_input.user_input }}"
+  when: hostname_config_enable | bool
+
+- name: Configure system hostname
+  ansible.builtin.hostname:
+    name: "{{ final_hostname }}"
+  become: true
+  when: 
+    - hostname_config_enable | bool
+    - final_hostname is defined
+    - final_hostname != ""
+  register: hostname_changed
+
+- name: Display hostname configuration message
+  ansible.builtin.debug:
+    msg: "System hostname configured to {{ final_hostname }}"
+  when: hostname_changed is changed

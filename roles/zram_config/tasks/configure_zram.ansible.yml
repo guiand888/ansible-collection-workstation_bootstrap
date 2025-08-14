@@ -1,0 +1,60 @@
+---
+# Child task file: configure_zram.ansible.yml
+# This file handles the configuration of ZRAM compressed swap
+
+- name: Check if ZRAM generator configuration file exists
+  ansible.builtin.stat:
+    path: "{{ zram_config_file_path }}"
+  register: zram_config_file_stat
+
+- name: Read existing ZRAM configuration if present
+  ansible.builtin.slurp:
+    src: "{{ zram_config_file_path }}"
+  register: existing_zram_config
+  when: zram_config_file_stat.stat.exists
+  # Read current configuration to determine if changes are needed
+
+- name: Parse existing ZRAM configuration
+  ansible.builtin.set_fact:
+    current_zram_config: "{{ existing_zram_config.content | b64decode }}"
+  when: existing_zram_config is defined
+
+- name: Display current ZRAM configuration
+  ansible.builtin.debug:
+    msg: "Current ZRAM configuration found"
+  when: current_zram_config is defined
+
+- name: Configure ZRAM device settings
+  ansible.builtin.blockinfile:
+    path: "{{ zram_config_file_path }}"
+    create: true
+    mode: '0644'
+    block: |
+      [{{ zram_config_device_name }}]
+      zram-fraction={{ zram_config_fraction }}
+      max-zram-size={{ zram_config_max_size_mb }}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ zram_config_device_name }}"
+  become: true
+  register: zram_config_changed
+  # Use blockinfile for idempotent ZRAM device configuration only
+
+- name: Restart ZRAM service to apply new configuration
+  ansible.builtin.systemd:
+    name: "{{ zram_config_service_name }}"
+    state: restarted
+  become: true
+  when: 
+    - zram_config_restart_service | bool
+    - zram_config_changed is changed
+  register: zram_service_restarted
+  # Only restart service if configuration actually changed
+
+- name: Display ZRAM configuration completion message
+  ansible.builtin.debug:
+    msg: "ZRAM configured successfully - Device: {{ zram_config_device_name }}, Fraction: {{ zram_config_fraction }}, Max Size: {{ zram_config_max_size_mb }}MB"
+  when: zram_config_changed is changed
+
+- name: Display no-change message
+  ansible.builtin.debug:
+    msg: "ZRAM configuration already up to date"
+  when: zram_config_changed is not changed

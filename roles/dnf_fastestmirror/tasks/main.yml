@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for dnf_fastestmirror
+
+- name: Include tasks to configure DNF fastest mirror
+  ansible.builtin.include_tasks: configure_fastestmirror.ansible.yml
+  when: dnf_fastestmirror_enable | bool

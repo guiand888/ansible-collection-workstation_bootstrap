@@ -1,0 +1,46 @@
+---
+# Child task file: manage_services.ansible.yml
+# This file handles the management of systemd services with graceful error handling
+
+- name: Check if service exists and get its status
+  ansible.builtin.systemd:
+    name: "{{ item.name }}"
+  register: service_status
+  failed_when: false
+  loop: "{{ service_management_services }}"
+  become: true
+  # Check each service without failing if it doesn't exist
+
+- name: Manage systemd services (stop and disable)
+  ansible.builtin.systemd:
+    name: "{{ item.item.name }}"
+    enabled: "{{ item.item.enabled }}"
+    state: "{{ item.item.state }}"
+  become: true
+  loop: "{{ service_status.results }}"
+  when: 
+    - item.status is defined
+    - item.status.UnitFileState is defined or item.status.ActiveState is defined
+  register: service_management_results
+  failed_when: not service_management_ignore_missing and item.failed
+  # Only manage services that actually exist
+
+- name: Display successful service management
+  ansible.builtin.debug:
+    msg: "Service '{{ item.item.item.name }}' managed successfully: {{ item.item.item.description }}"
+  loop: "{{ service_management_results.results | default([]) }}"
+  when: 
+    - item is succeeded
+    - not item.skipped | default(false)
+  loop_control:
+    label: "{{ item.item.item.name }}"
+
+- name: Display skipped services (service not found)
+  ansible.builtin.debug:
+    msg: "Service '{{ item.item.name }}' not found - skipping ({{ item.item.description }})"
+  loop: "{{ service_status.results }}"
+  when: 
+    - service_management_ignore_missing | bool
+    - item.status is not defined or (item.status.UnitFileState is not defined and item.status.ActiveState is not defined)
+  loop_control:
+    label: "{{ item.item.name }}"

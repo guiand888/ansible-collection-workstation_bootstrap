@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for hostname_config
+
+# hostname_config_hostname: System hostname to set (leave empty to prompt)
+hostname_config_hostname: ""
+
+# hostname_config_enable: Whether to configure hostname
+hostname_config_enable: true
+
+# hostname_config_prompt: Whether to prompt for hostname if not set
+hostname_config_prompt: true

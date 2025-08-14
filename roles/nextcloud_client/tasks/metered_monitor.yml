@@ -1,0 +1,70 @@
+---
+# Child task file: metered_monitor.yml
+# This file handles the configuration of metered network monitoring for Nextcloud
+
+- name: Create log directory for monitoring script
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.local/share"
+    state: directory
+    mode: '0755'
+
+- name: Deploy metered network monitoring script
+  ansible.builtin.template:
+    src: nextcloud-metered-monitor.sh.j2
+    dest: "{{ nextcloud_client_script_dir }}/{{ nextcloud_client_script_name }}"
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+  register: nextcloud_monitoring_script
+
+- name: Create systemd user directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.config/systemd/user"
+    state: directory
+    mode: '0755'
+
+- name: Deploy systemd user service for monitoring
+  ansible.builtin.template:
+    src: nextcloud-metered-monitor.service.j2
+    dest: "{{ ansible_user_dir }}/.config/systemd/user/{{ nextcloud_client_service_name }}.service"
+    mode: '0644'
+  register: nextcloud_monitoring_service
+
+- name: Reload systemd user daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+    scope: user
+  when: nextcloud_monitoring_service is changed
+
+- name: Enable and start Nextcloud metered network monitor service
+  ansible.builtin.systemd:
+    name: "{{ nextcloud_client_service_name }}.service"
+    enabled: true
+    state: started
+    scope: user
+  register: nextcloud_service_result
+
+- name: Display monitoring service status
+  ansible.builtin.debug:
+    msg: "Nextcloud metered network monitor service {{ 'started' if nextcloud_service_result is changed else 'already running' }}"
+
+- name: Check service status
+  ansible.builtin.systemd:
+    name: "{{ nextcloud_client_service_name }}.service"
+    scope: user
+  register: nextcloud_service_status
+
+- name: Display service information
+  ansible.builtin.debug:
+    msg: >
+      Nextcloud metered monitor service status: {{ nextcloud_service_status.status.ActiveState }}
+      Log file: {{ nextcloud_client_log_file }}
+      Check interval: {{ nextcloud_client_check_interval }} seconds
+
+- name: Restart monitoring service if script changed
+  ansible.builtin.systemd:
+    name: "{{ nextcloud_client_service_name }}.service"
+    state: restarted
+    scope: user
+  when: nextcloud_monitoring_script is changed

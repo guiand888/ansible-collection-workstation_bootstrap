@@ -1,0 +1,5 @@
+---
+# main task file for systemd_lid_config
+
+- name: Include tasks to configure lid behavior
+  ansible.builtin.include_tasks: configure_lid_behavior.ansible.yml

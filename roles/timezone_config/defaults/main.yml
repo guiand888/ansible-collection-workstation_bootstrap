@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for timezone_config
+
+# timezone_config_timezone: System timezone to set
+timezone_config_timezone: "Asia/Singapore"
+
+# timezone_config_enable: Whether to configure timezone
+timezone_config_enable: true

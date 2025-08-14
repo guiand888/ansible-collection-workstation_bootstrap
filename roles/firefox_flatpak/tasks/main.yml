@@ -1,0 +1,10 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for firefox_flatpak
+
+- name: Include tasks to migrate Firefox profiles (before replacement)
+  ansible.builtin.include_tasks: migrate_profiles.ansible.yml
+  when: firefox_flatpak_migrate_profile | bool
+
+- name: Include tasks to replace Firefox RPM with Flatpak
+  ansible.builtin.include_tasks: firefox_replacement.ansible.yml

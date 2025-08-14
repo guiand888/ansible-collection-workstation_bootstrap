@@ -1,0 +1,44 @@
+---
+# Child task file: swap_ffmpeg.ansible.yml
+# This file handles swapping ffmpeg-free with full ffmpeg and updating multimedia groups
+
+- name: Swap ffmpeg-free with full ffmpeg
+  ansible.builtin.dnf:
+    name:
+      - ffmpeg-free
+      - ffmpeg
+    state: latest
+    allowerasing: true
+  become: true
+  when: ffmpeg_full_swap_packages | bool
+  register: ffmpeg_swap_result
+
+- name: Update multimedia group packages
+  ansible.builtin.dnf:
+    name: "@multimedia"
+    state: latest
+    install_weak_deps: "{{ ffmpeg_full_install_weak_deps }}"
+    exclude: "{{ 'PackageKit-gstreamer-plugin' if ffmpeg_full_exclude_packagekit else omit }}"
+  become: true
+  when: 
+    - ffmpeg_full_update_multimedia_groups | bool
+    - ffmpeg_swap_result is succeeded
+  register: multimedia_update_result
+
+- name: Update sound-and-video group packages
+  ansible.builtin.dnf:
+    name: "@sound-and-video"
+    state: latest
+  become: true
+  when: 
+    - ffmpeg_full_update_multimedia_groups | bool
+    - ffmpeg_swap_result is succeeded
+  register: sound_video_update_result
+
+- name: Display ffmpeg swap completion message
+  ansible.builtin.debug:
+    msg: "Successfully swapped to full ffmpeg and updated multimedia groups"
+  when:
+    - ffmpeg_swap_result is succeeded
+    - multimedia_update_result is succeeded
+    - sound_video_update_result is succeeded

@@ -1,0 +1,17 @@
+---
+# Child task file: firefox_replacement.ansible.yml
+# This file handles the replacement of Firefox RPM with Firefox Flatpak
+
+- name: Remove Firefox RPM package
+  ansible.builtin.package:
+    name: firefox
+    state: absent
+  become: true
+  when: firefox_flatpak_remove_rpm | bool
+
+- name: Install Firefox Flatpak
+  community.general.flatpak:
+    name: "{{ firefox_flatpak_package_name }}"
+    state: present
+    method: "{{ firefox_flatpak_install_method }}"
+  when: firefox_flatpak_install_flatpak | bool

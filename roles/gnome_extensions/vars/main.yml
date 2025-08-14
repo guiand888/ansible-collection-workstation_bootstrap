@@ -1,0 +1,13 @@
+---
+# vars file for gnome_extensions
+
+# gnome_extensions_extensions_to_install: List of GNOME Shell extension names to install.
+# The role will automatically prefix these names with 'gnome-shell-extension-'
+# to form the DNF package name.
+#
+# Example usage:
+# gnome_extensions_extensions_to_install:
+#   - dash-to-dock
+#   - clipboard-indicator
+#   - blur-my-shell
+gnome_extensions_extensions_to_install: []

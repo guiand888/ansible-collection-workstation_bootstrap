@@ -1,0 +1,82 @@
+---
+# Child task file: install_udev_rules.yml
+# This file handles installation of Ledger hardware wallet udev rules
+
+- name: Check if Ledger udev rules already exist
+  ansible.builtin.stat:
+    path: "{{ ledger_udev_rules_path }}"
+  register: ledger_udev_existing_rules
+
+- name: Display current udev rules status
+  ansible.builtin.debug:
+    msg: "{{ 'Ledger udev rules already exist' if ledger_udev_existing_rules.stat.exists else 'Ledger udev rules not found, will install' }}"
+
+- name: Backup existing Ledger udev rules
+  ansible.builtin.copy:
+    src: "{{ ledger_udev_rules_path }}"
+    dest: "{{ ledger_udev_rules_path }}.backup.{{ ansible_date_time.epoch }}"
+    remote_src: true
+  become: true
+  when: 
+    - ledger_udev_existing_rules.stat.exists
+    - ledger_udev_backup_existing | bool
+  register: ledger_udev_backup_result
+
+- name: Display backup status
+  ansible.builtin.debug:
+    msg: "Existing rules backed up to {{ ledger_udev_rules_path }}.backup.{{ ansible_date_time.epoch }}"
+  when: ledger_udev_backup_result is changed
+
+- name: Create Ledger udev rules file with official content
+  ansible.builtin.copy:
+    content: |
+      # HW.1, Nano
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2581", ATTRS{idProduct}=="1b7c|2b7c|3b7c|4b7c", TAG+="uaccess", TAG+="udev-acl"
+      # Blue, NanoS, Aramis, HW.2, Nano X, NanoSP, Stax, Ledger Test,
+      SUBSYSTEMS=="usb", ATTRS{idVendor}=="2c97", TAG+="uaccess", TAG+="udev-acl"
+      # Same, but with hidraw-based library (instead of libusb)
+      KERNEL=="hidraw*", ATTRS{idVendor}=="2c97", MODE="0666"
+    dest: "{{ ledger_udev_rules_path }}"
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+  register: ledger_udev_install_result
+  
+- name: Reload udev rules
+  ansible.builtin.command:
+    cmd: udevadm control --reload-rules
+  become: true
+  when: 
+    - ledger_udev_reload_rules | bool
+    - ledger_udev_install_result is changed
+  register: ledger_udev_reload_result
+
+- name: Trigger udev
+  ansible.builtin.command:
+    cmd: udevadm trigger
+  become: true
+  when: 
+    - ledger_udev_reload_rules | bool
+    - ledger_udev_install_result is changed
+  register: ledger_udev_trigger_result
+
+- name: Display installation success
+  ansible.builtin.debug:
+    msg: "Ledger udev rules installed successfully using official content"
+  when: ledger_udev_install_result is changed
+
+- name: Display already up-to-date message
+  ansible.builtin.debug:
+    msg: "Ledger udev rules already present: {{ ledger_udev_rules_path }}"
+  when: ledger_udev_install_result is not changed
+
+- name: Verify udev rules file
+  ansible.builtin.stat:
+    path: "{{ ledger_udev_rules_path }}"
+  register: ledger_udev_verify
+
+- name: Display verification result
+  ansible.builtin.debug:
+    msg: "Ledger udev rules verified: {{ ledger_udev_rules_path }} ({{ ledger_udev_verify.stat.size }} bytes)"
+  when: ledger_udev_verify.stat.exists

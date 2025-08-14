@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for lid_behavior
+
+# lid_behavior_enable: Whether to configure lid behavior
+lid_behavior_enable: true
+
+# lid_behavior_config_file: Path to systemd logind configuration
+lid_behavior_config_file: "/etc/systemd/logind.conf"
+
+# lid_behavior_handle_lid_switch: Action when lid is closed
+lid_behavior_handle_lid_switch: "suspend"
+
+# lid_behavior_handle_lid_switch_external_power: Action when lid closed on external power
+lid_behavior_handle_lid_switch_external_power: "suspend"
+
+# lid_behavior_handle_lid_switch_docked: Action when lid closed while docked
+lid_behavior_handle_lid_switch_docked: "suspend"

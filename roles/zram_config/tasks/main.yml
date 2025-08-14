@@ -1,0 +1,19 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for zram_config
+
+- name: Include tasks to install ZRAM packages
+  ansible.builtin.include_tasks: install_packages.ansible.yml
+  when: 
+    - zram_config_enable | bool
+    - zram_config_install_packages | bool
+
+- name: Include tasks to configure ZRAM device
+  ansible.builtin.include_tasks: configure_zram.ansible.yml
+  when: zram_config_enable | bool
+
+- name: Include tasks to configure ZRAM-related sysctl parameters
+  ansible.builtin.include_tasks: configure_sysctl.ansible.yml
+  when: 
+    - zram_config_enable | bool
+    - zram_config_configure_sysctl | bool

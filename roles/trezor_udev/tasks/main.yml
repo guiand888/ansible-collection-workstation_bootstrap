@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for trezor_udev
+
+- name: Include tasks to install Trezor udev rules
+  ansible.builtin.include_tasks: install_udev_rules.yml
+  when: trezor_udev_enable | bool

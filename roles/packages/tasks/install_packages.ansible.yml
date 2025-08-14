@@ -1,0 +1,7 @@
+---
+
+- name: Install specified packages on Fedora
+  ansible.builtin.dnf:
+    name: "{{ packages_packages_to_install }}"
+    state: present
+  when: packages_packages_to_install | length > 0

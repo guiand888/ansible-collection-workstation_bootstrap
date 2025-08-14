@@ -1,0 +1,13 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ledger_udev
+
+- name: Include tasks to install Ubuntu dependencies
+  ansible.builtin.include_tasks: ubuntu_dependencies.yml
+  when: 
+    - ansible_distribution == "Ubuntu"
+    - ledger_udev_enable | bool
+
+- name: Include tasks to install Ledger udev rules
+  ansible.builtin.include_tasks: install_udev_rules.yml
+  when: ledger_udev_enable | bool

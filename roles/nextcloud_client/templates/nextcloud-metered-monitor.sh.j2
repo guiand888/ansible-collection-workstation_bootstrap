@@ -1,0 +1,157 @@
+#!/bin/bash
+# {{ ansible_managed }}
+# Nextcloud Metered Network Monitor
+# Automatically pauses Nextcloud client sync on metered networks
+
+# Configuration
+CHECK_INTERVAL={{ nextcloud_client_check_interval }}
+LOG_FILE="{{ nextcloud_client_log_file }}"
+NEXTCLOUD_CONFIG_DIR="{{ nextcloud_client_config_dir }}"
+
+# Create log directory if it doesn't exist
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Function to log messages
+log_message() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+# Function to check if network is metered
+is_metered_connection() {
+    # Check NetworkManager for metered connections
+    if command -v nmcli >/dev/null 2>&1; then
+        # Get active connection info
+        local active_conn=$(nmcli -t -f NAME connection show --active | head -1)
+        if [ -n "$active_conn" ]; then
+            local metered=$(nmcli -t -f connection.metered connection show "$active_conn" | cut -d: -f2)
+            if [ "$metered" = "yes" ]; then
+                return 0  # Metered
+            fi
+        fi
+        
+        # Check for mobile/cellular connections
+        local conn_type=$(nmcli -t -f TYPE connection show --active | head -1)
+        if [[ "$conn_type" =~ ^(gsm|cdma|bluetooth)$ ]]; then
+            return 0  # Assume mobile connections are metered
+        fi
+    fi
+    
+    # Fallback: check for common mobile interface patterns
+    if ip route | grep -E "(wwan|ppp|usb)" >/dev/null; then
+        return 0  # Likely metered
+    fi
+    
+    return 1  # Not metered
+}
+
+# Function to get Nextcloud sync status
+get_nextcloud_status() {
+    if pgrep -f "nextcloud.*--background" >/dev/null; then
+        # Check if sync is actually paused (this is approximate)
+        # Nextcloud doesn't have a direct "is paused" check via CLI
+        if [ -f "$HOME/.nextcloud_paused_by_monitor" ]; then
+            echo "paused"
+        else
+            echo "running"
+        fi
+    else
+        echo "not_running"
+    fi
+}
+
+# Function to pause Nextcloud sync
+pause_nextcloud() {
+    log_message "Pausing Nextcloud sync (metered connection detected)"
+    
+    # Create a marker file to track our pause state
+    touch "$HOME/.nextcloud_paused_by_monitor"
+    
+    # Kill Nextcloud client gracefully
+    if pgrep -f "nextcloud.*--background" >/dev/null; then
+        pkill -f "nextcloud.*--background"
+        sleep 2
+    fi
+    
+    # Show notification if available
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Nextcloud" "Sync paused - metered connection detected" --icon=network-wireless
+    fi
+}
+
+# Function to resume Nextcloud sync
+resume_nextcloud() {
+    log_message "Resuming Nextcloud sync (unmetered connection detected)"
+    
+    # Remove our marker file
+    rm -f "$HOME/.nextcloud_paused_by_monitor"
+    
+    # Start Nextcloud client in background
+    if command -v nextcloud >/dev/null 2>&1; then
+        nohup nextcloud --background >/dev/null 2>&1 &
+        disown
+    fi
+    
+    # Show notification if available
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send "Nextcloud" "Sync resumed - unmetered connection" --icon=network-wireless
+    fi
+}
+
+# Main monitoring loop
+main() {
+    log_message "Nextcloud metered network monitor started"
+    
+    local previous_metered_state=""
+    local previous_nextcloud_status=""
+    
+    while true; do
+        local current_metered_state=""
+        local current_nextcloud_status=""
+        
+        if is_metered_connection; then
+            current_metered_state="metered"
+        else
+            current_metered_state="unmetered"
+        fi
+        
+        current_nextcloud_status=$(get_nextcloud_status)
+        
+        # Log state changes
+        if [ "$current_metered_state" != "$previous_metered_state" ] || [ "$current_nextcloud_status" != "$previous_nextcloud_status" ]; then
+            log_message "Network: $current_metered_state, Nextcloud: $current_nextcloud_status"
+        fi
+        
+        # Take action based on network state
+        case "$current_metered_state" in
+            "metered")
+                if [ "$current_nextcloud_status" = "running" ]; then
+                    pause_nextcloud
+                fi
+                ;;
+            "unmetered")
+                if [ "$current_nextcloud_status" = "paused" ] || [ "$current_nextcloud_status" = "not_running" ]; then
+                    # Only resume if we paused it (check for our marker file)
+                    if [ -f "$HOME/.nextcloud_paused_by_monitor" ]; then
+                        resume_nextcloud
+                    fi
+                fi
+                ;;
+        esac
+        
+        previous_metered_state="$current_metered_state"
+        previous_nextcloud_status="$current_nextcloud_status"
+        
+        sleep "$CHECK_INTERVAL"
+    done
+}
+
+# Handle signals for graceful shutdown
+cleanup() {
+    log_message "Nextcloud metered network monitor stopped"
+    exit 0
+}
+
+trap cleanup SIGTERM SIGINT
+
+# Start main function
+main

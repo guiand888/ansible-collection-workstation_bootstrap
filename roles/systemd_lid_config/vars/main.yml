@@ -1,0 +1,12 @@
+---
+# vars file for systemd_lid_config
+
+# You can override the default actions here if you want to set them within the role,
+# otherwise, they'll come from defaults/main.yml and can be overridden in playbooks.
+
+# Example of overriding a specific action:
+# systemd_lid_config_actions:
+#   handle_lid_switch_docked: "ignore" # Example: ignore lid switch when docked
+
+# Note: No variables are strictly necessary in this file if defaults are sufficient
+# and users are expected to override in their playbooks or inventory.

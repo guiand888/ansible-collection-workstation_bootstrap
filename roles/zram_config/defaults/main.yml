@@ -1,0 +1,44 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for zram_config
+
+# zram_config_enable: Whether to enable ZRAM configuration
+zram_config_enable: true
+
+# zram_config_install_packages: Whether to install ZRAM packages if not present
+zram_config_install_packages: true
+
+# zram_config_packages: List of packages to install for ZRAM support
+zram_config_packages:
+  - zram
+
+# zram_config_file_path: Path to the ZRAM generator configuration file
+zram_config_file_path: "/etc/systemd/zram-generator.conf"
+
+# zram_config_device_name: Name of the ZRAM device to configure
+zram_config_device_name: "zram0"
+
+# zram_config_fraction: Fraction of system RAM to use for ZRAM (0.0-1.0)
+zram_config_fraction: 0.8
+
+# zram_config_max_size_mb: Maximum size in MB for ZRAM device
+zram_config_max_size_mb: 13107
+
+# zram_config_restart_service: Whether to restart the ZRAM service after configuration
+zram_config_restart_service: true
+
+# zram_config_service_name: Name of the systemd service for ZRAM setup
+zram_config_service_name: "systemd-zram-setup@{{ zram_config_device_name }}.service"
+
+# zram_config_configure_sysctl: Whether to configure related sysctl parameters
+zram_config_configure_sysctl: true
+
+# zram_config_oom_kill_allocating_task: Make OOM killer more aggressive
+zram_config_oom_kill_allocating_task: 1
+
+# zram_config_vfs_cache_pressure: Aggressively reclaim filesystem metadata cache
+zram_config_vfs_cache_pressure: 500
+
+# zram_config_swappiness: How aggressively the kernel swaps memory to swap space (0-200)
+# Value of 100 is optimal for ZRAM as it's much faster than disk-based swap
+zram_config_swappiness: 100

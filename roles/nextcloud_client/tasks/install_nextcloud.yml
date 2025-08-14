@@ -1,0 +1,39 @@
+---
+# Child task file: install_nextcloud.yml
+# This file handles the installation of Nextcloud desktop client
+
+- name: Check if Nextcloud client is already installed
+  ansible.builtin.command:
+    cmd: which nextcloud
+  register: nextcloud_client_which_result
+  failed_when: false
+  changed_when: false
+
+- name: Display current Nextcloud client status
+  ansible.builtin.debug:
+    msg: "{{ 'Nextcloud client already installed' if nextcloud_client_which_result.rc == 0 else 'Nextcloud client not found, will install' }}"
+
+- name: Install Nextcloud desktop client
+  ansible.builtin.package:
+    name: "{{ nextcloud_client_package_name }}"
+    state: present
+  become: true
+  when: nextcloud_client_which_result.rc != 0
+  register: nextcloud_client_installed
+
+- name: Verify Nextcloud client installation
+  ansible.builtin.command:
+    cmd: which nextcloud
+  register: nextcloud_client_verify
+  changed_when: false
+  failed_when: nextcloud_client_verify.rc != 0
+
+- name: Display Nextcloud client installation success
+  ansible.builtin.debug:
+    msg: "Nextcloud client installed successfully: {{ nextcloud_client_verify.stdout }}"
+  when: nextcloud_client_installed is changed
+
+- name: Display Nextcloud client already present
+  ansible.builtin.debug:
+    msg: "Nextcloud client already present: {{ nextcloud_client_verify.stdout }}"
+  when: nextcloud_client_installed is not changed

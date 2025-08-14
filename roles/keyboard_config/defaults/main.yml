@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for keyboard_config
+
+# keyboard_config_enable: Whether to configure keyboard and locale settings
+keyboard_config_enable: true
+
+# keyboard_config_locale: System locale to set
+keyboard_config_locale: "en_SG.UTF-8"
+
+# keyboard_config_x11_layout: X11 keyboard layout(s)
+keyboard_config_x11_layout: "us,cn"
+
+# keyboard_config_x11_model: X11 keyboard model
+keyboard_config_x11_model: "pc105"
+
+# keyboard_config_x11_variant: X11 keyboard variant(s)
+keyboard_config_x11_variant: "intl,"
+
+# keyboard_config_console_keymap: Console keymap
+keyboard_config_console_keymap: "us"

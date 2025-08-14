@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for s3_deep_sleep
+
+- name: Include tasks to configure S3 deep sleep
+  ansible.builtin.include_tasks: configure_s3_sleep.ansible.yml
+  when: s3_deep_sleep_enable | bool

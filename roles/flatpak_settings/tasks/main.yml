@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for flatpak_settings
+
+- name: Include tasks to configure Flatpak settings
+  ansible.builtin.include_tasks: configure_flatpak.ansible.yml
+  when: flatpak_settings_enable | bool

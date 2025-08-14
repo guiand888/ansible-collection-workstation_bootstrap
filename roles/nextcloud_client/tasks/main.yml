@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for nextcloud_client
+
+- name: Include tasks to install Nextcloud client
+  ansible.builtin.include_tasks: install_nextcloud.yml
+  when: 
+    - nextcloud_client_enable | bool
+    - nextcloud_client_install | bool
+
+- name: Include tasks to configure metered network monitoring
+  ansible.builtin.include_tasks: metered_monitor.yml
+  when: 
+    - nextcloud_client_enable | bool
+    - nextcloud_client_metered_pause | bool

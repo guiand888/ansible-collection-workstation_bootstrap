@@ -1,0 +1,32 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for aws_cli
+
+# aws_cli_enable: Whether to install/update AWS CLI v2
+aws_cli_enable: true
+
+# aws_cli_remove_old_version: Whether to remove the old yum/dnf version
+aws_cli_remove_old_version: true
+
+# aws_cli_download_url: URL for AWS CLI v2 download
+aws_cli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+
+# aws_cli_download_filename: Local filename for download
+aws_cli_download_filename: "awscliv2.zip"
+
+# aws_cli_temp_dir: Temporary directory for download and extraction
+aws_cli_temp_dir: "/tmp/awscli-install"
+
+# aws_cli_bin_dir: Binary directory for AWS CLI (fallback if not detected)
+aws_cli_bin_dir: "/usr/local/bin"
+
+# aws_cli_install_dir: Installation directory for AWS CLI (fallback if not detected)
+aws_cli_install_dir: "/usr/local/aws-cli"
+
+# aws_cli_update_existing: Whether to update existing installation
+# Set to false if you only want to install when not present
+aws_cli_update_existing: true
+
+# aws_cli_force_download: Whether to always download fresh installer
+# Set to true to force re-download even if cached file exists
+aws_cli_force_download: false

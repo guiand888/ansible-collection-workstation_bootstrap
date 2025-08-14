@@ -1,0 +1,46 @@
+---
+# Child task file: configure_flatpak.ansible.yml
+# This file handles the configuration of Flatpak custom settings
+
+- name: Configure additional Flatpak languages
+  ansible.builtin.command:
+    cmd: flatpak config --set extra-languages {{ flatpak_settings_extra_languages | join(',') }}
+  register: flatpak_languages_configured
+  changed_when: flatpak_languages_configured.rc == 0
+  failed_when: flatpak_languages_configured.rc != 0
+  when: flatpak_settings_extra_languages | length > 0
+  # Configure additional languages for Flatpak applications
+
+- name: Configure Evolution localized reply prefixes
+  ansible.builtin.command:
+    cmd: >
+      flatpak run --command=gsettings org.gnome.Evolution 
+      set org.gnome.evolution.mail composer-localized-re 
+      '{{ flatpak_settings_evolution_composer_localized_re }}'
+  register: evolution_config_result
+  changed_when: evolution_config_result.rc == 0
+  failed_when: false
+  when: flatpak_settings_evolution_config | bool
+  # Configure Evolution to work with localized reply prefixes
+  # failed_when: false because Evolution might not be installed
+
+- name: Display Flatpak languages configuration message
+  ansible.builtin.debug:
+    msg: "Flatpak extra languages configured: {{ flatpak_settings_extra_languages | join(', ') }}"
+  when: 
+    - flatpak_languages_configured is defined
+    - flatpak_languages_configured is succeeded
+
+- name: Display Evolution configuration message
+  ansible.builtin.debug:
+    msg: "Evolution composer localized reply prefixes configured: {{ flatpak_settings_evolution_composer_localized_re }}"
+  when: 
+    - evolution_config_result is defined
+    - evolution_config_result is succeeded
+
+- name: Display Evolution skip message
+  ansible.builtin.debug:
+    msg: "Evolution configuration skipped (application not found or not installed via Flatpak)"
+  when: 
+    - evolution_config_result is defined
+    - evolution_config_result is failed

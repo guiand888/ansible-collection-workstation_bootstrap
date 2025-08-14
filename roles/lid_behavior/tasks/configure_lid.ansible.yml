@@ -1,0 +1,55 @@
+---
+# Child task file: configure_lid.ansible.yml
+# This file handles the configuration of laptop lid closing behavior
+
+- name: Check if systemd logind configuration file exists
+  ansible.builtin.stat:
+    path: "{{ lid_behavior_config_file }}"
+  register: logind_config_stat
+
+- name: Configure lid switch behavior
+  ansible.builtin.lineinfile:
+    path: "{{ lid_behavior_config_file }}"
+    regexp: '^#?HandleLidSwitch='
+    line: "HandleLidSwitch={{ lid_behavior_handle_lid_switch }}"
+    state: present
+  become: true
+  when: logind_config_stat.stat.exists
+  register: lid_switch_configured
+
+- name: Configure lid switch behavior on external power
+  ansible.builtin.lineinfile:
+    path: "{{ lid_behavior_config_file }}"
+    regexp: '^#?HandleLidSwitchExternalPower='
+    line: "HandleLidSwitchExternalPower={{ lid_behavior_handle_lid_switch_external_power }}"
+    state: present
+  become: true
+  when: logind_config_stat.stat.exists
+  register: lid_external_power_configured
+
+- name: Configure lid switch behavior when docked
+  ansible.builtin.lineinfile:
+    path: "{{ lid_behavior_config_file }}"
+    regexp: '^#?HandleLidSwitchDocked='
+    line: "HandleLidSwitchDocked={{ lid_behavior_handle_lid_switch_docked }}"
+    state: present
+  become: true
+  when: logind_config_stat.stat.exists
+  register: lid_docked_configured
+
+- name: Display lid behavior configuration completion message
+  ansible.builtin.debug:
+    msg: >
+      Lid behavior configured successfully - 
+      Normal: {{ lid_behavior_handle_lid_switch }}, 
+      External Power: {{ lid_behavior_handle_lid_switch_external_power }}, 
+      Docked: {{ lid_behavior_handle_lid_switch_docked }}
+  when: 
+    - lid_switch_configured is changed or
+      lid_external_power_configured is changed or  
+      lid_docked_configured is changed
+
+- name: Display warning if logind config file not found
+  ansible.builtin.debug:
+    msg: "Warning: systemd logind configuration file {{ lid_behavior_config_file }} not found - skipping lid behavior configuration"
+  when: not logind_config_stat.stat.exists

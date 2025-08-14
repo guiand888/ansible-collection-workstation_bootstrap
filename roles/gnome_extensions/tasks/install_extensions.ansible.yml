@@ -1,0 +1,12 @@
+---
+
+- name: Construct GNOME extension package names
+  ansible.builtin.set_fact:
+    # Prepend 'gnome-shell-extension-' to each item in the list
+    gnome_extensions_dnf_package_names: "{{ gnome_extensions_extensions_to_install | map('regex_replace', '^(.*)$', 'gnome-shell-extension-\\1') | list }}"
+  # This task dynamically generates the full package names required by DNF.
+
+- name: Install GNOME Shell extensions via DNF
+  ansible.builtin.dnf:
+    name: "{{ gnome_extensions_dnf_package_names }}"
+    state: present

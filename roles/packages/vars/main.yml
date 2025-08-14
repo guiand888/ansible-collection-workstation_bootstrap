@@ -1,0 +1,12 @@
+---
+# vars file for fedora_package_installer
+
+# packages_packages_to_install: List of packages to be installed.
+# This variable uses the role name prefix as required by coding standards.
+#
+# Example usage:
+# packages_packages_to_install:
+#   - htop
+#   - hugo
+#   - hunspell-fr
+#   - hunspell-uk

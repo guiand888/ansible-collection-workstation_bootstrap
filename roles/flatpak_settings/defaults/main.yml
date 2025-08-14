@@ -1,0 +1,16 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for flatpak_settings
+
+# flatpak_settings_enable: Whether to configure Flatpak settings
+flatpak_settings_enable: true
+
+# flatpak_settings_extra_languages: List of additional languages to configure
+flatpak_settings_extra_languages:
+  - "fr"
+
+# flatpak_settings_evolution_config: Whether to configure Evolution settings
+flatpak_settings_evolution_config: true
+
+# flatpak_settings_evolution_composer_localized_re: Localized reply prefixes for Evolution
+flatpak_settings_evolution_composer_localized_re: "AW,SV"

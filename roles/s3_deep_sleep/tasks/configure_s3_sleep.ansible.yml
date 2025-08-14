@@ -1,0 +1,64 @@
+---
+# Child task file: configure_s3_sleep.ansible.yml
+# This file handles the configuration of S3 deep sleep mode
+
+- name: Check if mem_sleep sysfs file exists
+  ansible.builtin.stat:
+    path: "{{ s3_deep_sleep_mem_sleep_path }}"
+  register: mem_sleep_file
+  # Check if the system supports sleep mode configuration
+
+- name: Read current sleep mode configuration
+  ansible.builtin.slurp:
+    src: "{{ s3_deep_sleep_mem_sleep_path }}"
+  register: current_sleep_mode
+  when: 
+    - mem_sleep_file.stat.exists
+    - s3_deep_sleep_check_current | bool
+  # Read current setting to determine if change is needed
+
+- name: Parse current sleep mode
+  ansible.builtin.set_fact:
+    current_active_mode: "{{ (current_sleep_mode.content | b64decode).split() | select('match', '\\[.*\\]') | first | regex_replace('[\\[\\]]', '') }}"
+  when: 
+    - current_sleep_mode is defined
+    - current_sleep_mode.content is defined
+  # Extract the currently active mode (surrounded by square brackets)
+
+- name: Display current sleep mode
+  ansible.builtin.debug:
+    msg: "Current sleep mode: {{ current_active_mode | default('unknown') }}"
+  when: s3_deep_sleep_check_current | bool
+
+- name: Configure S3 deep sleep mode
+  ansible.builtin.shell:
+    cmd: "echo {{ s3_deep_sleep_mode }} > {{ s3_deep_sleep_mem_sleep_path }}"
+  become: true
+  when: 
+    - mem_sleep_file.stat.exists
+    - current_active_mode is not defined or current_active_mode != s3_deep_sleep_mode
+  register: sleep_mode_changed
+  # Only change if current mode is different from desired mode
+
+- name: Update GRUB configuration
+  ansible.builtin.command:
+    cmd: grub2-mkconfig -o {{ s3_deep_sleep_grub_config_path }}
+  become: true
+  when: 
+    - s3_deep_sleep_update_grub | bool
+    - sleep_mode_changed is changed
+  register: grub_updated
+  # Only update GRUB if sleep mode was actually changed
+
+- name: Display configuration completion message
+  ansible.builtin.debug:
+    msg: "S3 deep sleep configured successfully. Mode: {{ s3_deep_sleep_mode }}"
+  when: sleep_mode_changed is changed
+
+- name: Display no-change message
+  ansible.builtin.debug:
+    msg: "S3 deep sleep already configured with mode: {{ current_active_mode }}"
+  when: 
+    - current_active_mode is defined
+    - current_active_mode == s3_deep_sleep_mode
+    - sleep_mode_changed is not changed

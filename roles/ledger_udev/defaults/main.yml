@@ -1,0 +1,25 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ledger_udev
+
+# ledger_udev_enable: Whether to install Ledger udev rules
+ledger_udev_enable: true
+
+# ledger_udev_rules_url: URL for Ledger udev rules installation script
+ledger_udev_rules_url: "https://raw.githubusercontent.com/LedgerHQ/udev-rules/master/add_udev_rules.sh"
+
+# ledger_udev_rules_path: Local path for udev rules file
+ledger_udev_rules_path: "/etc/udev/rules.d/20-hw1.rules"
+
+# ledger_udev_backup_existing: Whether to backup existing rules file
+ledger_udev_backup_existing: true
+
+# ledger_udev_reload_rules: Whether to reload udev rules after installation
+ledger_udev_reload_rules: true
+
+# Ubuntu-specific settings
+# ledger_udev_ubuntu_enable_universe: Whether to enable universe repository on Ubuntu
+ledger_udev_ubuntu_enable_universe: true
+
+# ledger_udev_ubuntu_install_fuse: Whether to install libfuse3-3 package on Ubuntu
+ledger_udev_ubuntu_install_fuse: true

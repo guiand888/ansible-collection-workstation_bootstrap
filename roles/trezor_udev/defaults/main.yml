@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for trezor_udev
+
+# trezor_udev_enable: Whether to install Trezor udev rules
+trezor_udev_enable: true
+
+# trezor_udev_rules_url: URL for official Trezor udev rules
+trezor_udev_rules_url: "https://data.trezor.io/udev/51-trezor.rules"
+
+# trezor_udev_rules_path: Local path for udev rules file
+trezor_udev_rules_path: "/etc/udev/rules.d/51-trezor.rules"
+
+# trezor_udev_backup_existing: Whether to backup existing rules file
+trezor_udev_backup_existing: true
+
+# trezor_udev_reload_rules: Whether to reload udev rules after installation
+trezor_udev_reload_rules: true

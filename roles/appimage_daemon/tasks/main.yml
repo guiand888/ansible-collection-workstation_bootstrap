@@ -1,0 +1,10 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for appimage_daemon
+
+- name: Include tasks to clean up old AppImage installations
+  ansible.builtin.include_tasks: cleanup_old.ansible.yml
+  when: appimage_daemon_clean_old_installation | bool
+
+- name: Include tasks to install go-appimage daemon
+  ansible.builtin.include_tasks: install_daemon.ansible.yml

@@ -1,0 +1,26 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for firefox_flatpak
+
+# firefox_flatpak_remove_rpm: Whether to remove the Firefox RPM package
+firefox_flatpak_remove_rpm: true
+
+# firefox_flatpak_install_flatpak: Whether to install the Firefox Flatpak
+firefox_flatpak_install_flatpak: true
+
+# firefox_flatpak_install_method: Installation method for Flatpak ('user' or 'system')
+firefox_flatpak_install_method: "user"
+
+# firefox_flatpak_package_name: The Flatpak package name for Firefox
+firefox_flatpak_package_name: "org.mozilla.firefox"
+
+# firefox_flatpak_migrate_profile: Whether to migrate profiles from RPM to Flatpak location
+firefox_flatpak_migrate_profile: true
+
+# firefox_flatpak_rpm_profile_path: Path to RPM Firefox profiles
+# Typical path: /home/username/.mozilla/firefox
+firefox_flatpak_rpm_profile_path: "{{ ansible_env.HOME }}/.mozilla/firefox"
+
+# firefox_flatpak_flatpak_profile_path: Path to Flatpak Firefox profiles
+# Typical path: /home/username/.var/app/org.mozilla.firefox/.mozilla/firefox
+firefox_flatpak_flatpak_profile_path: "{{ ansible_env.HOME }}/.var/app/org.mozilla.firefox/.mozilla/firefox"

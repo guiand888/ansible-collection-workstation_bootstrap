@@ -1,0 +1,43 @@
+---
+# Child task file: configure_keyboard.ansible.yml
+# This file handles the configuration of keyboard layout and locale settings
+
+- name: Set system locale
+  ansible.builtin.command:
+    cmd: localectl set-locale LANG={{ keyboard_config_locale }}
+  become: true
+  register: locale_set
+  changed_when: locale_set.rc == 0
+  # Set system locale using localectl
+
+- name: Set X11 keyboard layout and variant
+  ansible.builtin.command:
+    cmd: >
+      localectl set-x11-keymap 
+      {{ keyboard_config_x11_layout }}
+      {{ keyboard_config_x11_model }}
+      {{ keyboard_config_x11_variant }}
+  become: true
+  register: x11_keymap_set
+  changed_when: x11_keymap_set.rc == 0
+  # Configure X11 keyboard with layouts and variants
+
+- name: Set console keymap
+  ansible.builtin.command:
+    cmd: localectl set-keymap {{ keyboard_config_console_keymap }}
+  become: true
+  register: console_keymap_set
+  changed_when: console_keymap_set.rc == 0
+  # Set console keymap
+
+- name: Display keyboard configuration completion message
+  ansible.builtin.debug:
+    msg: >
+      Keyboard configured successfully - 
+      Locale: {{ keyboard_config_locale }}, 
+      X11 Layout: {{ keyboard_config_x11_layout }} ({{ keyboard_config_x11_variant }}), 
+      Console: {{ keyboard_config_console_keymap }}
+  when: 
+    - locale_set is succeeded
+    - x11_keymap_set is succeeded  
+    - console_keymap_set is succeeded

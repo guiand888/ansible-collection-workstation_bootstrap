@@ -1,0 +1,29 @@
+---
+# Child task file: configure_sysctl.ansible.yml
+# This file handles the configuration of ZRAM-related sysctl parameters
+# Following Linux/Red Hat best practices by using /etc/sysctl.d/
+
+- name: Configure ZRAM-related sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: "/etc/sysctl.d/99-memory-management.conf"
+    state: present
+    reload: true
+  loop:
+    - { key: 'vm.oom_kill_allocating_task', value: '{{ zram_config_oom_kill_allocating_task }}' }
+    - { key: 'vm.vfs_cache_pressure', value: '{{ zram_config_vfs_cache_pressure }}' }
+    - { key: 'vm.swappiness', value: '{{ zram_config_swappiness }}' }
+  become: true
+  register: sysctl_config_changed
+  # Use sysctl module for standard Linux kernel parameter configuration
+
+- name: Display sysctl configuration completion message
+  ansible.builtin.debug:
+    msg: "Memory management sysctl parameters configured in /etc/sysctl.d/99-memory-management.conf"
+  when: sysctl_config_changed is changed
+
+- name: Display sysctl no-change message
+  ansible.builtin.debug:
+    msg: "Memory management sysctl parameters already up to date"
+  when: sysctl_config_changed is not changed

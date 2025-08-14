@@ -1,0 +1,15 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ffmpeg_full
+
+# ffmpeg_full_swap_packages: Whether to swap ffmpeg-free with full ffmpeg
+ffmpeg_full_swap_packages: true
+
+# ffmpeg_full_update_multimedia_groups: Whether to update multimedia and sound-video groups
+ffmpeg_full_update_multimedia_groups: true
+
+# ffmpeg_full_exclude_packagekit: Whether to exclude PackageKit-gstreamer-plugin during group updates
+ffmpeg_full_exclude_packagekit: true
+
+# ffmpeg_full_install_weak_deps: Whether to install weak dependencies during group updates
+ffmpeg_full_install_weak_deps: false

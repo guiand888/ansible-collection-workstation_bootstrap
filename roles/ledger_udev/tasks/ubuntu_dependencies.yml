@@ -1,0 +1,52 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Child task file: ubuntu_dependencies.yml
+# This file handles Ubuntu-specific dependencies for Ledger hardware wallet support
+
+- name: Add universe repository for Ubuntu
+  ansible.builtin.apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - "deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} universe"
+    - "deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }}-updates universe"
+  become: yes
+  register: universe_repo_result
+  when: 
+    - ansible_distribution == "Ubuntu"
+    - ledger_udev_ubuntu_enable_universe | bool
+
+- name: Fail if universe repository setup failed
+  ansible.builtin.fail:
+    msg: "Failed to add universe repository on Ubuntu. Ledger hardware wallet support requires FUSE which is available in the universe repository."
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ledger_udev_ubuntu_enable_universe | bool
+    - universe_repo_result is failed
+
+- name: Install libfuse3-3 package for Ubuntu
+  ansible.builtin.apt:
+    name: libfuse3-3
+    state: present
+    update_cache: yes
+  become: yes
+  register: fuse_install_result
+  when: 
+    - ansible_distribution == "Ubuntu"
+    - ledger_udev_ubuntu_install_fuse | bool
+
+- name: Fail if FUSE package installation failed
+  ansible.builtin.fail:
+    msg: "Failed to install libfuse3-3 package on Ubuntu. This package is required for Ledger hardware wallet support."
+  when:
+    - ansible_distribution == "Ubuntu"
+    - ledger_udev_ubuntu_install_fuse | bool
+    - fuse_install_result is failed
+
+- name: Report successful dependency installation
+  ansible.builtin.debug:
+    msg: "Ubuntu dependencies for Ledger hardware wallet installed successfully (universe repository and libfuse3-3)"
+  when: 
+    - ansible_distribution == "Ubuntu"
+    - (universe_repo_result is changed or fuse_install_result is changed)

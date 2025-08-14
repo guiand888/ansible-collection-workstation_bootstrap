@@ -1,0 +1,7 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for keyboard_config
+
+- name: Include tasks to configure keyboard and locale
+  ansible.builtin.include_tasks: configure_keyboard.ansible.yml
+  when: keyboard_config_enable | bool

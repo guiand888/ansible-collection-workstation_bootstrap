@@ -1,0 +1,21 @@
+---
+# Child task file: install_packages.ansible.yml
+# This file handles the installation of ZRAM-related packages
+
+- name: Install ZRAM packages
+  ansible.builtin.package:
+    name: "{{ zram_config_packages }}"
+    state: present
+  become: true
+  register: zram_packages_installed
+  # Install required packages for ZRAM support
+
+- name: Display package installation completion message
+  ansible.builtin.debug:
+    msg: "ZRAM packages installed successfully: {{ zram_config_packages | join(', ') }}"
+  when: zram_packages_installed is changed
+
+- name: Display package already installed message
+  ansible.builtin.debug:
+    msg: "ZRAM packages already installed: {{ zram_config_packages | join(', ') }}"
+  when: zram_packages_installed is not changed
