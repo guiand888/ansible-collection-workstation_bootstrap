@@ -4,4 +4,4 @@
   ansible.builtin.dnf:
     name: "{{ packages_packages_to_install }}"
     state: present
-  when: packages_packages_to_install | length > 0
+  when: (packages_packages_to_install | default([])) | length > 0

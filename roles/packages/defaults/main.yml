@@ -1,4 +1,6 @@
 ---
 # defaults file for fedora_package_installer
 
-# Note: The actual list of packages to install is defined in fedora_package_installer/vars/main.yml
+packages_packages_to_install: []
+
+# Note: Override this list in vars/main.yml or via playbook variables
