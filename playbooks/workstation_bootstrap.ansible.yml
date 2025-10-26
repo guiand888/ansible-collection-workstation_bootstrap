@@ -73,142 +73,171 @@
     # System Configuration Block
     - name: System Configuration
       when: workstation_enable_system | bool
-      tags: [system]
+      tags:
+        - system
       block:
         - name: Configure ZRAM
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.zram_config
-          tags: [zram]
+          tags:
+            - zram
 
         - name: Configure DNF fastest mirror
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.dnf_fastestmirror
-          tags: [dnf]
+          tags:
+            - dnf
 
         # - name: Configure hostname
         #   ansible.builtin.include_role:
         #     name: guiand888.workstation_bootstrap.hostname_config
-        #   tags: [hostname]
+        #   tags:
+        #     - hostname
 
         - name: Configure timezone
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.timezone_config
-          tags: [timezone]
+          tags:
+            - timezone
 
         - name: Configure keyboard layout
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.keyboard_config
-          tags: [keyboard]
+          tags:
+            - keyboard
 
     # Hardware Configuration Block
     - name: Hardware Configuration
       when: workstation_enable_hardware | bool
-      tags: [hardware]
+      tags:
+        - hardware
       block:
         - name: Configure S3 deep sleep
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.s3_deep_sleep
-          tags: [sleep]
+          tags:
+            - sleep
 
         - name: Configure lid behavior
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.lid_behavior
-          tags: [lid]
+          tags:
+            - lid
 
         - name: Configure systemd lid settings
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.systemd_lid_config
-          tags: [lid]
+          tags:
+            - lid
 
     # Package Installation Block
     - name: Package Installation
       when: workstation_enable_packages | bool
-      tags: [packages]
+      tags:
+        - packages
       block:
         - name: Install system packages
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.packages
-          tags: [install]
+          tags:
+            - install
 
         - name: Install GNOME extensions
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.gnome_extensions
-          tags: [gnome]
+          tags:
+            - gnome
 
         - name: Switch to full FFmpeg
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.ffmpeg_full
-          tags: [multimedia]
+          tags:
+            - multimedia
 
     # Flatpak Configuration Block
     - name: Flatpak Configuration
       when: workstation_enable_flatpak | bool
-      tags: [flatpak]
+      tags:
+        - flatpak
       block:
         - name: Install Flatpak applications
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.flatpacks
-          tags: [install]
+          tags:
+            - install
 
         - name: Configure Flatpak settings
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.flatpak_settings
-          tags: [config]
+          tags:
+            - config
 
         - name: Replace Firefox RPM with Flatpak
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.firefox_flatpak
-          tags: [firefox]
+          tags:
+            - firefox
 
     # Application Configuration Block
     - name: Application Configuration
       when: workstation_enable_apps | bool
-      tags: [apps]
+      tags:
+        - apps
       block:
         - name: Configure AppImage daemon
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.appimage_daemon
-          tags: [appimage]
+          tags:
+            - appimage
 
         # - name: Install AWS CLI
         #   ansible.builtin.include_role:
         #     name: guiand888.workstation_bootstrap.aws_cli
-        #   tags: [aws]
+        #   tags:
+        #     - aws
 
         - name: Configure Nextcloud client
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.nextcloud_client
-          tags: [nextcloud]
+          tags:
+            - nextcloud
 
         - name: Install Bitwarden CLI and ansible-vault integration
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.ansible_vault_bitwarden
-          tags: [bitwarden, vault]
+          tags:
+            - bitwarden
+            - vault
 
     # Cryptocurrency Hardware Support Block
     - name: Cryptocurrency Hardware Support
       when: workstation_enable_crypto | bool
-      tags: [crypto]
+      tags:
+        - crypto
       block:
         - name: Configure Trezor udev rules
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.trezor_udev
-          tags: [trezor]
+          tags:
+            - trezor
 
         - name: Configure Ledger udev rules
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.ledger_udev
-          tags: [ledger]
+          tags:
+            - ledger
 
     # Service Management Block
     - name: Service Management
       when: workstation_enable_services | bool
-      tags: [services]
+      tags:
+        - services
       block:
         - name: Manage system services
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.service_management
-          tags: [management]
+          tags:
+            - management
 
   post_tasks:
     - name: Display completion message
