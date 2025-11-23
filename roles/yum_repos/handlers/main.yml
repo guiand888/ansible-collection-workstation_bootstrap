@@ -3,8 +3,8 @@
 # handlers file for yum_repos
 
 - name: Refresh DNF cache
-  ansible.builtin.command: dnf makecache
+  ansible.builtin.dnf:
+    update_cache: true
   become: true
   listen: refresh yum repos cache
   when: yum_repos_refresh_cache | bool
-  changed_when: true
