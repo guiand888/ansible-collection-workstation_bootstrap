@@ -1,0 +1,11 @@
+---
+
+- name: Install Flatpak packages
+  community.general.flatpak:
+    name: "{{ item.name }}"
+    state: present
+    method: "{{ item.method | default(flatpak_install_method_default) }}"
+  loop: "{{ flatpak_packages_to_install }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: flatpak_packages_to_install | length > 0

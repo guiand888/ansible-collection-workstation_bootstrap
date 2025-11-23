@@ -1,9 +1,9 @@
 ---
-# main task file for flatpaks
+# main task file for flatpak
 
-- name: Include tasks to install flatpaks
-  ansible.builtin.include_tasks: install_flatpaks.ansible.yml
-  when: flatpaks_packages_to_install is defined
+- name: Include tasks to install flatpak
+  ansible.builtin.include_tasks: install_flatpak.ansible.yml
+  when: flatpak_packages_to_install is defined
   # Only include if the variable is defined to avoid errors on undef.
 
 # No explicit OS check here. Flatpak is generally cross-distribution,

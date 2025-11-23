@@ -1,17 +1,17 @@
 ---
-# vars file for flatpaks
+# vars file for flatpak
 
-# flatpaks_packages_to_install: List of Flatpak packages to be installed.
+# flatpak_packages_to_install: List of Flatpak packages to be installed.
 # Each item in the list should be a dictionary with a 'name' key and an optional 'method' key.
 # The 'method' key accepts 'user' or 'system'. If 'method' is not specified, it defaults
-# to the value of `flatpaks_install_method_default`.
+# to the value of `flatpak_install_method_default`.
 #
 # Example usage:
-# flatpaks_packages_to_install:
+# flatpak_packages_to_install:
 #   - name: org.gimp.GIMP
 #     method: system # Install GIMP system-wide
 #   - name: org.inkscape.Inkscape
 #     # Will use the default method (e.g., 'user' as per defaults/main.yml)
 #   - name: org.kde.kdenlive
 #     method: user # Explicitly install Kdenlive for the current user
-flatpaks_packages_to_install: []
+flatpak_packages_to_install: []

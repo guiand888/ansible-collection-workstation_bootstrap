@@ -36,7 +36,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `ffmpeg_full` - Switch to full FFmpeg with codecs
 
 ### Flatpak Applications
-- `flatpaks` - Install Flatpak applications
+- `flatpak` - Install Flatpak applications
 - `flatpak_settings` - Configure Flatpak settings
 - `firefox_flatpak` - Replace Firefox RPM with Flatpak
 
@@ -58,7 +58,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
   roles:
     - guiand888.workstation_bootstrap.zram_config
     - guiand888.workstation_bootstrap.packages
-    - guiand888.workstation_bootstrap.flatpaks
+    - guiand888.workstation_bootstrap.flatpak
 ```
 
 ## Variables
@@ -71,7 +71,7 @@ zram_config_fraction: 0.75
 packages_packages_to_install:
   - htop
   - hugo
-flatpaks_packages_to_install:
+flatpak_packages_to_install:
   - name: org.gimp.GIMP
     method: user
 ```

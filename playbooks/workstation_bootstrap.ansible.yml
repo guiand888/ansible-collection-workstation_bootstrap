@@ -58,7 +58,7 @@
             - dnf_fastestmirror
             - ffmpeg_full
             - firefox_flatpak
-            - flatpaks
+            - flatpak
             - flatpak_settings
             - gnome_extensions
             - hostname_config
@@ -172,7 +172,7 @@
       block:
         - name: Install Flatpak applications
           ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.flatpaks
+            name: guiand888.workstation_bootstrap.flatpak
           tags:
             - install
 
