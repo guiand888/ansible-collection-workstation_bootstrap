@@ -17,7 +17,9 @@
 - name: Parse existing ZRAM configuration
   ansible.builtin.set_fact:
     current_zram_config: "{{ existing_zram_config.content | b64decode }}"
-  when: existing_zram_config is succeeded
+  when: 
+    - existing_zram_config is defined
+    - existing_zram_config is succeeded
 
 - name: Display current ZRAM configuration
   ansible.builtin.debug:
