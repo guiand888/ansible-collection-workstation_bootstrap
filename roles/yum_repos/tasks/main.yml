@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for yum_repos
+
+- name: Include tasks to install YUM/DNF repositories
+  ansible.builtin.include_tasks: install_repos.ansible.yml
+  when: yum_repos_enable | bool

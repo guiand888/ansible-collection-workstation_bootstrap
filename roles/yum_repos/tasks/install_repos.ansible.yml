@@ -1,0 +1,49 @@
+---
+# Child task file: install_repos.ansible.yml
+# This file handles the installation and management of YUM/DNF repository configuration files
+
+- name: Check if system supports YUM/DNF
+  ansible.builtin.stat:
+    path: /etc/yum.repos.d
+  register: yum_repos_dir_stat
+
+- name: Display warning if YUM repos directory not found
+  ansible.builtin.debug:
+    msg: "Warning: /etc/yum.repos.d directory not found - skipping repository installation"
+  when: not yum_repos_dir_stat.stat.exists
+
+- name: Install repository files from configured source directory
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "{{ yum_repos_install_dir }}/{{ item | basename }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+  loop: "{{ query('fileglob', yum_repos_custom_repos_dir + '/*.repo') }}"
+  loop_control:
+    label: "{{ item | basename }}"
+  register: yum_repos_installed
+  when:
+    - yum_repos_custom_repos_dir | length > 0
+    - yum_repos_dir_stat.stat.exists
+  notify: refresh yum repos cache
+
+- name: Display installation summary
+  ansible.builtin.debug:
+    msg: |
+      YUM/DNF repositories installed successfully:
+      - Repos installed: {{ yum_repos_installed.results | length if yum_repos_installed.results is defined else 0 }}
+      - Source directory: {{ yum_repos_custom_repos_dir }}
+      - Target directory: {{ yum_repos_install_dir }}
+  when:
+    - yum_repos_custom_repos_dir | length > 0
+    - yum_repos_dir_stat.stat.exists
+
+- name: Display configuration reminder
+  ansible.builtin.debug:
+    msg: "Note: yum_repos_custom_repos_dir variable not set. Configure it to point to your repository files directory."
+  when:
+    - yum_repos_custom_repos_dir | length == 0
+    - yum_repos_dir_stat.stat.exists

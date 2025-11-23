@@ -20,8 +20,8 @@
 
 - name: Set detected binary directory from 'which' command
   ansible.builtin.set_fact:
-    detected_bin_dir: "{{ aws_cli_which_result.stdout | dirname }}"
-  when: 
+    aws_cli_detected_bin_dir: "{{ aws_cli_which_result.stdout | dirname }}"
+  when:
     - aws_cli_which_result.rc == 0
     - aws_cli_which_result.stdout != ""
 
@@ -33,8 +33,8 @@
 
 - name: Extract install directory from symlink target
   ansible.builtin.set_fact:
-    detected_install_dir: "{{ aws_cli_symlink_stat.stat.lnk_target | regex_replace('/v2/current/bin/aws$', '') }}"
-  when: 
+    aws_cli_detected_install_dir: "{{ aws_cli_symlink_stat.stat.lnk_target | regex_replace('/v2/current/bin/aws$', '') }}"
+  when:
     - aws_cli_symlink_stat is defined
     - aws_cli_symlink_stat.stat.islnk is defined
     - aws_cli_symlink_stat.stat.islnk
@@ -43,20 +43,24 @@
 
 - name: Use detected paths or fall back to defaults
   ansible.builtin.set_fact:
-    final_bin_dir: "{{ detected_bin_dir | default(aws_cli_bin_dir) }}"
-    final_install_dir: "{{ detected_install_dir | default(aws_cli_install_dir) }}"
+    aws_cli_final_bin_dir: "{{ aws_cli_detected_bin_dir | default(aws_cli_bin_dir) }}"
+    aws_cli_final_install_dir: "{{ aws_cli_detected_install_dir | default(aws_cli_install_dir) }}"
 
 - name: Display detected AWS CLI paths
   ansible.builtin.debug:
-    msg: >
-      AWS CLI paths - 
-      Binary directory: {{ final_bin_dir }}, 
-      Install directory: {{ final_install_dir }}
-      {% if detected_bin_dir is defined %}(detected from existing installation){% else %}(using defaults){% endif %}
+    msg: >-
+      AWS CLI paths -
+      Binary directory: {{ aws_cli_final_bin_dir }},
+      Install directory: {{ aws_cli_final_install_dir }}
+      {%- if aws_cli_detected_bin_dir is defined -%}
+        (detected from existing installation)
+      {%- else -%}
+        (using defaults)
+      {%- endif -%}
 
 - name: Check current AWS CLI version if installed
   ansible.builtin.command:
-    cmd: "{{ final_bin_dir }}/aws --version"
+    cmd: "{{ aws_cli_final_bin_dir }}/aws --version"
   register: aws_cli_current_version
   failed_when: false
   changed_when: false
@@ -65,22 +69,31 @@
 - name: Display current AWS CLI version
   ansible.builtin.debug:
     msg: "Current AWS CLI version: {{ aws_cli_current_version.stdout }}"
-  when: 
+  when:
     - aws_cli_which_result.rc == 0
     - aws_cli_current_version.rc == 0
 
 - name: Determine if AWS CLI action is needed
   ansible.builtin.set_fact:
-    aws_cli_action_needed: "{{ 
-      (aws_cli_which_result.rc != 0) or 
-      (aws_cli_which_result.rc == 0 and aws_cli_update_existing | bool) 
-    }}"
+    aws_cli_action_needed: >-
+      {{
+        (aws_cli_which_result.rc != 0) or
+        (aws_cli_which_result.rc == 0 and aws_cli_update_existing | bool)
+      }}
 
 - name: Display action to be taken
   ansible.builtin.debug:
-    msg: >
-      AWS CLI action: 
-      {% if aws_cli_which_result.rc != 0 %}Fresh installation{% else %}{% if aws_cli_update_existing %}Update existing installation{% else %}No action (already installed){% endif %}{% endif %}
+    msg: >-
+      AWS CLI action:
+      {%- if aws_cli_which_result.rc != 0 -%}
+        Fresh installation
+      {%- else -%}
+        {%- if aws_cli_update_existing -%}
+          Update existing installation
+        {%- else -%}
+          No action (already installed)
+        {%- endif -%}
+      {%- endif -%}
 
 - name: Create temporary directory for AWS CLI installation
   ansible.builtin.file:
@@ -109,30 +122,31 @@
 - name: Install AWS CLI v2 (fresh installation)
   ansible.builtin.command:
     cmd: "{{ aws_cli_temp_dir }}/aws/install"
-    creates: "{{ final_bin_dir }}/aws"
+    creates: "{{ aws_cli_final_bin_dir }}/aws"
   become: true
-  when: 
+  when:
     - aws_cli_action_needed | bool
     - aws_cli_which_result.rc != 0
   register: aws_cli_fresh_install
 
 - name: Update AWS CLI v2 (existing installation)
   ansible.builtin.command:
-    cmd: >
-      {{ aws_cli_temp_dir }}/aws/install 
-      --bin-dir {{ final_bin_dir }} 
-      --install-dir {{ final_install_dir }} 
+    cmd: >-
+      {{ aws_cli_temp_dir }}/aws/install
+      --bin-dir {{ aws_cli_final_bin_dir }}
+      --install-dir {{ aws_cli_final_install_dir }}
       --update
   become: true
-  when: 
+  when:
     - aws_cli_action_needed | bool
     - aws_cli_which_result.rc == 0
     - aws_cli_update_existing | bool
   register: aws_cli_updated
+  changed_when: false
 
 - name: Verify AWS CLI v2 installation
   ansible.builtin.command:
-    cmd: "{{ final_bin_dir }}/aws --version"
+    cmd: "{{ aws_cli_final_bin_dir }}/aws --version"
   register: aws_cli_final_version
   changed_when: false
 
@@ -144,7 +158,7 @@
 - name: Display AWS CLI already up-to-date message
   ansible.builtin.debug:
     msg: "AWS CLI v2 already up-to-date: {{ aws_cli_final_version.stdout }}"
-  when: 
+  when:
     - aws_cli_action_needed | bool
     - aws_cli_fresh_install is not changed
     - aws_cli_updated is not changed
@@ -152,7 +166,7 @@
 - name: Display AWS CLI no action needed message
   ansible.builtin.debug:
     msg: "AWS CLI v2 already installed (update disabled): {{ aws_cli_final_version.stdout }}"
-  when: 
+  when:
     - not aws_cli_action_needed | bool
     - aws_cli_which_result.rc == 0
 

@@ -1,4 +1,4 @@
-#SPDX-License-Identifier: MIT-0
+# SPDX-License-Identifier: MIT-0
 galaxy_info:
   author: Guillaume Andre (@guiand888)
   description: Install AWS CLI v2 following official AWS installation instructions

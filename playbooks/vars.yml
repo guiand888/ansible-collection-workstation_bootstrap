@@ -145,14 +145,14 @@ firefox_flatpak_rpm_profile_path: "{{ ansible_env.HOME }}/.mozilla/firefox"
 firefox_flatpak_flatpak_profile_path: "{{ ansible_env.HOME }}/.var/app/org.mozilla.firefox/.mozilla/firefox"
 
 # =============================================================================
-# FLATPACKS CONFIGURATION
+# flatpaks CONFIGURATION
 # =============================================================================
-# flatpacks_install_method_default: Default installation method ('user' or 'system')
-flatpacks_install_method_default: "user"
+# flatpaks_install_method_default: Default installation method ('user' or 'system')
+flatpaks_install_method_default: "user"
 
-# flatpacks_packages_to_install: List of Flatpak packages to install
+# flatpaks_packages_to_install: List of Flatpak packages to install
 # Example:
-# flatpacks_packages_to_install:
+# flatpaks_packages_to_install:
 #   - name: "org.gnome.Calculator"
 #     method: "user"  # Optional: overrides default method
 #   - name: "org.libreoffice.LibreOffice"

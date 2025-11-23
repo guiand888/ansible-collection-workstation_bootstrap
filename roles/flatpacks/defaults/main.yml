@@ -1,7 +1,7 @@
 ---
-# defaults file for flatpacks
+# defaults file for flatpaks
 
-# flatpacks_install_method_default: Defines the default installation method for flatpaks.
-# Accepts 'user' or 'system'. Individual flatpak entries in flatpacks_packages_to_install
+# flatpaks_install_method_default: Defines the default installation method for flatpaks.
+# Accepts 'user' or 'system'. Individual flatpak entries in flatpaks_packages_to_install
 # can override this default.
-flatpacks_install_method_default: "user"
+flatpaks_install_method_default: "user"

@@ -1,0 +1,6 @@
+---
+- name: Test yum_repos role
+  hosts: localhost
+  remote_user: root
+  roles:
+    - yum_repos

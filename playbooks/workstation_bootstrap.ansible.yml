@@ -1,7 +1,7 @@
 ---
 # Workstation Setup Playbook
 # Executes the guiand888.workstation_bootstrap collection to configure a Fedora workstation
-# 
+#
 # Usage:
 #   ansible-playbook workstation-setup.yml
 #   ansible-playbook workstation-setup.yml --tags show-defaults
@@ -27,6 +27,9 @@
 
   tasks:
     - name: Display all role default variables
+      tags:
+        - never
+        - show_defaults
       block:
         - name: Load and display default variables for all roles
           ansible.builtin.debug:
@@ -43,7 +46,11 @@
               {% endif %}
           vars:
             role_defaults: "{{ lookup('ansible.builtin.file', role_defaults_path, errors='ignore') | from_yaml | default({}) }}"
-            role_defaults_path: "{{ lookup('ansible.builtin.env', 'ANSIBLE_COLLECTIONS_PATHS') | default('~/.ansible/collections') | split(':') | first }}/ansible_collections/guiand888/workstation_bootstrap/roles/{{ item }}/defaults/main.yml"
+            role_defaults_base: >-
+              {{ lookup('ansible.builtin.env', 'ANSIBLE_COLLECTIONS_PATHS')
+                  | default('~/.ansible/collections') | split(':') | first }}
+            role_defaults_path: >-
+              {{ role_defaults_base }}/ansible_collections/guiand888/workstation_bootstrap/roles/{{ item }}/defaults/main.yml
           loop:
             - ansible_vault_bitwarden
             - appimage_daemon
@@ -51,7 +58,7 @@
             - dnf_fastestmirror
             - ffmpeg_full
             - firefox_flatpak
-            - flatpacks
+            - flatpaks
             - flatpak_settings
             - gnome_extensions
             - hostname_config
@@ -66,9 +73,6 @@
             - timezone_config
             - trezor_udev
             - zram_config
-      tags:
-        - never
-        - show_defaults
 
     # System Configuration Block
     - name: System Configuration
@@ -88,11 +92,17 @@
           tags:
             - dnf
 
-        # - name: Configure hostname
-        #   ansible.builtin.include_role:
-        #     name: guiand888.workstation_bootstrap.hostname_config
-        #   tags:
-        #     - hostname
+        - name: Configure custom yum/dnf repositories
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.yum_repos
+          tags:
+            - yum
+
+        - name: Configure hostname
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.hostname_config
+          tags:
+            - hostname
 
         - name: Configure timezone
           ansible.builtin.include_role:
@@ -162,7 +172,7 @@
       block:
         - name: Install Flatpak applications
           ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.flatpacks
+            name: guiand888.workstation_bootstrap.flatpaks
           tags:
             - install
 
@@ -190,11 +200,11 @@
           tags:
             - appimage
 
-        # - name: Install AWS CLI
-        #   ansible.builtin.include_role:
-        #     name: guiand888.workstation_bootstrap.aws_cli
-        #   tags:
-        #     - aws
+        - name: Install AWS CLI
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.aws_cli
+          tags:
+            - aws
 
         - name: Configure Nextcloud client
           ansible.builtin.include_role:

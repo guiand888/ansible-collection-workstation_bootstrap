@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MIT-0
+---
+# defaults file for yum_repos
+
+# yum_repos_enable: Whether to enable YUM/DNF repository installation
+yum_repos_enable: true
+
+# yum_repos_install_dir: Target directory for repository configuration files
+yum_repos_install_dir: "/etc/yum.repos.d"
+
+# yum_repos_backup_existing: Whether to backup existing repos before replacement (backups are per-file via ansible's copy: backup: true)
+yum_repos_backup_existing: true
+
+# yum_repos_refresh_cache: Whether to refresh DNF/YUM cache after installing repos
+yum_repos_refresh_cache: true
+
+# yum_repos_custom_repos_dir: Optional path to custom repository files (e.g., from inventory)
+# If set, repos from this directory will be copied after default repos (allowing overrides)
+# Example: "{{ playbook_dir }}/inventories/gafr_endpoints/group_vars/ga_workstations/yum.repos.d"
+yum_repos_custom_repos_dir: ""
