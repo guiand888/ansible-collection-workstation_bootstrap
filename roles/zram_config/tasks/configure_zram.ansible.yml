@@ -14,15 +14,15 @@
   when: zram_config_file_stat.stat.exists
   # Read current configuration to determine if changes are needed
 
-- name: Parse existing ZRAM configuration
-  ansible.builtin.set_fact:
-    current_zram_config: "{{ (existing_zram_config.content | b64decode) if existing_zram_config is defined else '' }}"
-  when: existing_zram_config is defined
+# - name: Parse existing ZRAM configuration
+#   ansible.builtin.set_fact:
+#     current_zram_config: "{{ (existing_zram_config.content | b64decode) if existing_zram_config is defined else '' }}"
+#   when: existing_zram_config is defined
 
-- name: Display current ZRAM configuration
-  ansible.builtin.debug:
-    msg: "Current ZRAM configuration found"
-  when: current_zram_config is defined
+# - name: Display current ZRAM configuration
+#   ansible.builtin.debug:
+#     msg: "Current ZRAM configuration found"
+#   when: current_zram_config is defined
 
 - name: Configure ZRAM device settings
   ansible.builtin.blockinfile:
