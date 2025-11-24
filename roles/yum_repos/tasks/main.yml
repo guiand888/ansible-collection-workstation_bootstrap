@@ -5,3 +5,7 @@
 - name: Include tasks to install YUM/DNF repositories
   ansible.builtin.include_tasks: install_repos.ansible.yml
   when: yum_repos_enable | bool
+
+- name: Include tasks to install YUM/DNF repositories from URLs
+  ansible.builtin.include_tasks: install_repos_from_urls.ansible.yml
+  when: yum_repos_enable | bool

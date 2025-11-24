@@ -7,7 +7,7 @@
     name:
       - ffmpeg-free
       - ffmpeg
-    state: latest
+    state: present
     allowerasing: true
   become: true
   when: ffmpeg_full_swap_packages | bool
@@ -16,11 +16,11 @@
 - name: Update multimedia group packages
   ansible.builtin.dnf:
     name: "@multimedia"
-    state: latest
+    state: present
     install_weak_deps: "{{ ffmpeg_full_install_weak_deps }}"
     exclude: "{{ 'PackageKit-gstreamer-plugin' if ffmpeg_full_exclude_packagekit else omit }}"
   become: true
-  when: 
+  when:
     - ffmpeg_full_update_multimedia_groups | bool
     - ffmpeg_swap_result is succeeded
   register: multimedia_update_result
@@ -28,17 +28,9 @@
 - name: Update sound-and-video group packages
   ansible.builtin.dnf:
     name: "@sound-and-video"
-    state: latest
+    state: present
   become: true
-  when: 
+  when:
     - ffmpeg_full_update_multimedia_groups | bool
     - ffmpeg_swap_result is succeeded
   register: sound_video_update_result
-
-- name: Display ffmpeg swap completion message
-  ansible.builtin.debug:
-    msg: "Successfully swapped to full ffmpeg and updated multimedia groups"
-  when:
-    - ffmpeg_swap_result is succeeded
-    - multimedia_update_result is succeeded
-    - sound_video_update_result is succeeded

@@ -1,0 +1,16 @@
+---
+# Child task file: install_repos_from_urls.ansible.yml
+# Installs YUM/DNF repositories from remote URLs
+
+- name: Install repositories from URLs
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+    disable_gpg_check: false
+  become: true
+  loop: "{{ yum_repos_urls | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+  register: yum_repos_from_urls_installed
+  when: yum_repos_urls | length > 0
+  notify: refresh yum repos cache
