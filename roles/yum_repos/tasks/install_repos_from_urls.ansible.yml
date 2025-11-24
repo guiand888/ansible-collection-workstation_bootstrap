@@ -6,7 +6,9 @@
   ansible.builtin.dnf:
     name: "{{ item }}"
     state: present
-    disable_gpg_check: false
+    # Repository packages (e.g., rpmfusion-release) often don't have pre-configured GPG keys
+    # GPG check is disabled for initial installation; the repo itself provides GPG keys for packages
+    disable_gpg_check: true
   become: true
   loop: "{{ yum_repos_urls | default([]) }}"
   loop_control:
