@@ -6,8 +6,8 @@
 
 - name: Include tasks to install flatpak
   ansible.builtin.include_tasks: install_flatpak.ansible.yml
-  when: flatpak_packages_to_install is defined
-  # Only include if the variable is defined to avoid errors on undef.
+  # Removed the 'when' condition since install_flatpak.ansible.yml has its own condition
+  # to check if flatpak_packages_to_install has content
 
 # No explicit OS check here. Flatpak is generally cross-distribution,
 # but the DNF role implies a Fedora context. If broader OS support is needed

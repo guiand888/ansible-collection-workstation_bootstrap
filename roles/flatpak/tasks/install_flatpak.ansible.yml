@@ -2,10 +2,10 @@
 
 - name: Install Flatpak packages
   community.general.flatpak:
-    name: "{{ item.name }}"
+    name: "{{ item.name if item.name is defined else item }}"
     state: present
     method: "{{ item.method | default(flatpak_install_method_default) }}"
   loop: "{{ flatpak_packages_to_install }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ item.name if item.name is defined else item }}"
   when: flatpak_packages_to_install | length > 0
