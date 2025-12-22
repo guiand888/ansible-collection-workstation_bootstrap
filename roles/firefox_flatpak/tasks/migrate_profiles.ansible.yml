@@ -29,15 +29,16 @@
   ansible.builtin.set_fact:
     actual_rpm_profiles: >-
       {{
-        rpm_profile_dirs.files | 
+        rpm_profile_dirs.files |
         selectattr('path', 'match', '.*[^/]+$') |
         rejectattr('path', 'match', '.*/Crash Reports$') |
         rejectattr('path', 'match', '.*/Pending Pings$') |
         list
       }}
-  when: 
+  when:
     - rpm_profile_dirs is defined
-    - rpm_profile_dirs.matched > 0
+    - rpm_profile_dirs.files is defined
+    - rpm_profile_dirs.files | length > 0
 
 - name: Check if Flatpak Firefox profile directory exists
   ansible.builtin.stat:
@@ -51,8 +52,9 @@
   ansible.builtin.stat:
     path: "{{ firefox_flatpak_flatpak_profile_path }}/profiles.ini"
   register: flatpak_profiles_ini
-  when: 
+  when:
     - flatpak_profile_dir is defined
+    - flatpak_profile_dir.stat is defined
     - flatpak_profile_dir.stat.exists
 
 - name: Create Flatpak Firefox profile parent directories
@@ -81,8 +83,12 @@
 
 - name: Display profile migration status
   ansible.builtin.debug:
-    msg: "Firefox profiles migrated: {{ actual_rpm_profiles | length }} profile(s) from {{ firefox_flatpak_rpm_profile_path }} to {{ firefox_flatpak_flatpak_profile_path }}"
-  when: 
+    msg: >-
+      Firefox profiles migrated: {{ actual_rpm_profiles | length }} profile(s)
+      from {{ firefox_flatpak_rpm_profile_path }}
+      to {{ firefox_flatpak_flatpak_profile_path }}
+  when:
+    - actual_rpm_profiles is defined
     - profile_migration is defined
     - profile_migration is succeeded
 
