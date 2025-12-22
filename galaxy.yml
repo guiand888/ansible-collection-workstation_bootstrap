@@ -13,7 +13,7 @@ name: workstation_bootstrap
 # - building a collection (ansible-galaxy collection build)
 # - publishing to Galaxy (Automation Hub or community Galaxy)
 # - installing from a built artifact (.tar.gz)
-# version: 0.0.0
+version: 0.0.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md

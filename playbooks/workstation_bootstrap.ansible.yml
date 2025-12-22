@@ -23,6 +23,7 @@
     workstation_enable_apps: true
     workstation_enable_crypto: true
     workstation_enable_services: true
+    workstation_enable_zram: true
 
   tasks:
     - name: Display all role default variables
@@ -79,12 +80,6 @@
       tags:
         - system
       block:
-        - name: Configure ZRAM
-          ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.zram_config
-          tags:
-            - zram
-
         - name: Configure DNF fastest mirror
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.dnf_fastestmirror
@@ -114,6 +109,18 @@
             name: guiand888.workstation_bootstrap.keyboard_config
           tags:
             - keyboard
+
+    # ZRAM Configuration Block
+    - name: ZRAM Configuration
+      when: workstation_enable_zram | bool
+      tags:
+        - zram
+      block:
+        - name: Configure ZRAM
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.zram_config
+          tags:
+            - zram
 
     # Hardware Configuration Block
     - name: Hardware Configuration
@@ -254,4 +261,4 @@
         msg: |
           Workstation setup completed successfully!
           To view all default variables: ansible-playbook workstation-setup.yml --tags show-defaults
-          Available tags: system, hardware, packages, flatpak, apps, services, crypto
+          Available tags: system, zram, hardware, packages, flatpak, apps, services, crypto
