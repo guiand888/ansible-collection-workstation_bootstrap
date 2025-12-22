@@ -1,6 +1,9 @@
 ---
 # main task file for flatpak
 
+- name: Setup Flatpak remotes
+  ansible.builtin.include_tasks: setup_flatpak_remotes.ansible.yml
+
 - name: Include tasks to install flatpak
   ansible.builtin.include_tasks: install_flatpak.ansible.yml
   when: flatpak_packages_to_install is defined
