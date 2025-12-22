@@ -1,7 +1,10 @@
 ---
 
-- name: Install specified packages on Fedora
+- name: Install specified packages on Fedora with progress display
   ansible.builtin.dnf:
-    name: "{{ packages_packages_to_install }}"
+    name: "{{ item }}"
     state: present
+  loop: "{{ packages_packages_to_install | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
   when: (packages_packages_to_install | default([])) | length > 0

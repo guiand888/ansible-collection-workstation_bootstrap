@@ -9,7 +9,11 @@ namespace: guiand888
 name: workstation_bootstrap
 
 # The version of the collection. Must be compatible with semantic versioning
-# version: 1.4.0
+# required field when:
+# - building a collection (ansible-galaxy collection build)
+# - publishing to Galaxy (Automation Hub or community Galaxy)
+# - installing from a built artifact (.tar.gz)
+# version: 0.0.0
 
 # The path to the Markdown (.md) readme file. This path is relative to the root of the collection
 readme: README.md
@@ -17,12 +21,12 @@ readme: README.md
 # A list of the collection's content authors. Can be just the name or in the format 'Full Name <email>
 # @nicks:irc/im.site#channel'
 authors:
-- Guillaume Andre <guillaume@example.com> (@guiand888)
+- Guillaume A <mail@guillaumea.fr> (@guiand888)
 
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Ansible collection for bootstrapping Fedora workstations with system optimizations, package management, and hardware support
+description: Ansible collection for bootstrapping Fedora workstations with system optimizations, package management, and hardware support. Can be used directly from main branch.
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'

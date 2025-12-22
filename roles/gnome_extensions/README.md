@@ -1,12 +1,18 @@
 # gnome_extensions
 
-An Ansible role to install GNOME Shell extensions via `dnf` on Fedora systems.
+An Ansible role to install GNOME Shell extensions via `dnf` on Fedora systems with individual extension progress display.
 
 ## Requirements
 
 * This role is designed for and tested on Fedora Linux distributions.
 * Assumes `dnf` is the package manager.
 * Assumes the GNOME Shell extensions are available as packages following the `gnome-shell-extension-` naming convention.
+
+## Features
+
+- **Individual Extension Progress**: Each GNOME extension installation is displayed separately, showing which extension is currently being installed.
+- **Automatic Package Name Construction**: Automatically prepends `gnome-shell-extension-` to extension names.
+- **Clear Labels**: Shows extension package names as labels during installation for easy tracking.
 
 ## Role Variables
 
@@ -48,6 +54,12 @@ To use this role, define the `gnome_extensions_extensions_to_install` variable i
   roles:
     - gnome_extensions
 ```
+
+## Usage Notes
+
+- The role now shows progress for each individual GNOME extension during installation
+- Extension package names are displayed as labels in the Ansible output
+- Empty extension lists are handled gracefully (no installation attempted)
 
 ## License
 
