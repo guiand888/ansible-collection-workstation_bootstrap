@@ -1,13 +1,21 @@
 ---
 # Child task file: install_repos_from_urls.ansible.yml
-# Installs YUM/DNF repositories from remote URLs
+# Installs YUM/DNF repositories from remote URLs using a three-step approach
+# to handle HTTP 302 redirects gracefully
 
-- name: Install repositories from URLs
+- name: Download repository RPM from URL
+  ansible.builtin.get_url:
+    url: "{{ item }}"
+    dest: "/tmp/{{ item | basename }}"
+    mode: '0644'
+  loop: "{{ yum_repos_urls | default([]) }}"
+  register: yum_repos_downloaded
+  when: yum_repos_urls | length > 0
+
+- name: Install downloaded repository RPMs
   ansible.builtin.dnf:
-    name: "{{ item }}"
+    name: "/tmp/{{ item | basename }}"
     state: present
-    # Repository packages (e.g., rpmfusion-release) often don't have pre-configured GPG keys
-    # GPG check is disabled for initial installation; the repo itself provides GPG keys for packages
     disable_gpg_check: true
   become: true
   loop: "{{ yum_repos_urls | default([]) }}"
@@ -16,3 +24,10 @@
   register: yum_repos_from_urls_installed
   when: yum_repos_urls | length > 0
   notify: refresh yum repos cache
+
+- name: Clean up downloaded RPMs
+  ansible.builtin.file:
+    path: "/tmp/{{ item | basename }}"
+    state: absent
+  loop: "{{ yum_repos_urls | default([]) }}"
+  when: yum_repos_urls | length > 0
