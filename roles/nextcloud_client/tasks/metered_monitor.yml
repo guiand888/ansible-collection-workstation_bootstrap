@@ -13,8 +13,8 @@
     src: nextcloud-metered-monitor.sh.j2
     dest: "{{ nextcloud_client_script_dir }}/{{ nextcloud_client_script_name }}"
     mode: '0755'
-    owner: root
-    group: root
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user_gid }}"
   become: true
   register: nextcloud_monitoring_script
 
@@ -36,6 +36,8 @@
     daemon_reload: true
     scope: user
   when: nextcloud_monitoring_service is changed
+  become: false
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Enable and start Nextcloud metered network monitor service
   ansible.builtin.systemd:
@@ -44,16 +46,21 @@
     state: started
     scope: user
   register: nextcloud_service_result
+  become: false
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Display monitoring service status
   ansible.builtin.debug:
     msg: "Nextcloud metered network monitor service {{ 'started' if nextcloud_service_result is changed else 'already running' }}"
+  when: nextcloud_service_result is not failed
 
 - name: Check service status
   ansible.builtin.systemd:
     name: "{{ nextcloud_client_service_name }}.service"
     scope: user
   register: nextcloud_service_status
+  become: false
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Display service information
   ansible.builtin.debug:
@@ -61,6 +68,9 @@
       Nextcloud metered monitor service status: {{ nextcloud_service_status.status.ActiveState }}
       Log file: {{ nextcloud_client_log_file }}
       Check interval: {{ nextcloud_client_check_interval }} seconds
+  when:
+    - nextcloud_service_status is not failed
+    - nextcloud_service_status.status is defined
 
 - name: Restart monitoring service if script changed
   ansible.builtin.systemd:
@@ -68,3 +78,5 @@
     state: restarted
     scope: user
   when: nextcloud_monitoring_script is changed
+  become: false
+  ignore_errors: "{{ ansible_check_mode }}"
