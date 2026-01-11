@@ -14,4 +14,3 @@
 #     # Will use the default method (e.g., 'user' as per defaults/main.yml)
 #   - name: org.kde.kdenlive
 #     method: user # Explicitly install Kdenlive for the current user
-flatpak_packages_to_install: []

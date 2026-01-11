@@ -5,3 +5,6 @@
 # Accepts 'user' or 'system'. Individual flatpak entries in flatpak_packages_to_install
 # can override this default.
 flatpak_install_method_default: "user"
+
+# flatpak_packages_to_install: List of Flatpak packages to install
+flatpak_packages_to_install: []
