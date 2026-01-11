@@ -8,4 +8,5 @@
   loop: "{{ flatpak_packages_to_install }}"
   loop_control:
     label: "{{ item.name if item.name is defined else item }}"
+  become: false
   when: flatpak_packages_to_install | length > 0

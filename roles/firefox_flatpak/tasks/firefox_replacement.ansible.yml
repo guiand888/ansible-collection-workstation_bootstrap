@@ -28,4 +28,5 @@
     name: "{{ firefox_flatpak_package_name }}"
     state: present
     method: "{{ firefox_flatpak_install_method }}"
+  become: false
   when: firefox_flatpak_install_flatpak | bool
