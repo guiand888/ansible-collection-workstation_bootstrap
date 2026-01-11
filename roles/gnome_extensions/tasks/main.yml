@@ -11,3 +11,7 @@
   ansible.builtin.include_tasks: install_extensions.ansible.yml
   when: gnome_extensions_extensions_to_install is defined and gnome_extensions_extensions_to_install | length > 0
   # Only include if the variable is defined and not empty.
+
+- name: Include tasks to enable installed GNOME extensions
+  ansible.builtin.include_tasks: enable_extensions.ansible.yml
+  when: gnome_extensions_enable_all | default(false) | bool
