@@ -7,6 +7,8 @@
   register: gnome_extensions_installed_list
   become: false
   changed_when: false
+  tags:
+    - gnome
 
 - name: Enable all installed GNOME extensions
   ansible.builtin.command:
@@ -17,8 +19,12 @@
   changed_when: "'is now enabled' in gnome_extensions_enable_result.stdout"
   failed_when: gnome_extensions_enable_result.rc != 0 and 'already enabled' not in gnome_extensions_enable_result.stderr
   ignore_errors: "{{ ansible_check_mode }}"
+  tags:
+    - gnome
 
 - name: Report enabled extensions status
   ansible.builtin.debug:
     msg: "Enabled {{ gnome_extensions_installed_list.stdout_lines | length }} GNOME extensions"
   when: gnome_extensions_installed_list.stdout_lines | length > 0
+  tags:
+    - gnome
