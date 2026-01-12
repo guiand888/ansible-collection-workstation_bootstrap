@@ -7,14 +7,15 @@
     path: "{{ ansible_user_dir }}/.local/share"
     state: directory
     mode: '0755'
+    become: false
 
 - name: Deploy metered network monitoring script
   ansible.builtin.template:
     src: nextcloud-metered-monitor.sh.j2
     dest: "{{ nextcloud_client_script_dir }}/{{ nextcloud_client_script_name }}"
     mode: '0755'
-    owner: "{{ ansible_user_id }}"
-    group: "{{ ansible_user_gid }}"
+    owner: "root"
+    group: "root"
   become: true
   register: nextcloud_monitoring_script
 
@@ -23,6 +24,7 @@
     path: "{{ ansible_user_dir }}/.config/systemd/user"
     state: directory
     mode: '0755'
+    become: false
 
 - name: Deploy systemd user service for monitoring
   ansible.builtin.template:
@@ -30,6 +32,7 @@
     dest: "{{ ansible_user_dir }}/.config/systemd/user/{{ nextcloud_client_service_name }}.service"
     mode: '0644'
   register: nextcloud_monitoring_service
+  become: false
 
 - name: Reload systemd user daemon
   ansible.builtin.systemd:
