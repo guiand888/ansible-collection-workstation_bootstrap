@@ -9,6 +9,7 @@
   changed_when: flatpak_languages_configured.rc == 0
   failed_when: flatpak_languages_configured.rc != 0
   when: flatpak_settings_extra_languages | length > 0
+  become: false
   # Configure additional languages for Flatpak applications
 
 - name: Configure Evolution localized reply prefixes
@@ -21,26 +22,30 @@
   changed_when: evolution_config_result.rc == 0
   failed_when: false
   when: flatpak_settings_evolution_config | bool
+  become: false
   # Configure Evolution to work with localized reply prefixes
   # failed_when: false because Evolution might not be installed
 
 - name: Display Flatpak languages configuration message
   ansible.builtin.debug:
     msg: "Flatpak extra languages configured: {{ flatpak_settings_extra_languages | join(', ') }}"
-  when: 
+  when:
     - flatpak_languages_configured is defined
     - flatpak_languages_configured is succeeded
+  become: false
 
 - name: Display Evolution configuration message
   ansible.builtin.debug:
     msg: "Evolution composer localized reply prefixes configured: {{ flatpak_settings_evolution_composer_localized_re }}"
-  when: 
+  when:
     - evolution_config_result is defined
     - evolution_config_result is succeeded
+  become: false
 
 - name: Display Evolution skip message
   ansible.builtin.debug:
     msg: "Evolution configuration skipped (application not found or not installed via Flatpak)"
-  when: 
+  when:
     - evolution_config_result is defined
     - evolution_config_result is failed
+  become: false
