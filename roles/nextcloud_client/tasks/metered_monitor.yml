@@ -13,7 +13,7 @@
     src: nextcloud-metered-monitor.sh.j2
     dest: "{{ nextcloud_client_script_dir }}/{{ nextcloud_client_script_name }}"
     mode: '0755'
-    owner: "{{ ansible_user }}"
+    owner: "{{ ansible_user_id }}"
     group: "{{ ansible_user_gid }}"
   become: true
   register: nextcloud_monitoring_script
