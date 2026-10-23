@@ -1,0 +1,18 @@
+---
+packman_codecs_enable: true
+packman_codecs_repo_name: packman
+packman_codecs_repo_url: "https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/"
+packman_codecs_gpgkey: "https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/repodata/repomd.xml.key"
+packman_codecs_priority: 90
+# Packages switched to the Packman build (vendor change allowed).
+packman_codecs_packages:
+  - ffmpeg
+  - gstreamer-plugins-libav
+  - libavcodec
+  - libavdevice
+  - libavfilter
+  - libavformat
+  - libavutil
+  - libswresample
+  - libswscale
+  - vlc-codec-gstreamer
