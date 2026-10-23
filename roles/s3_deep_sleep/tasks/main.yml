@@ -4,4 +4,11 @@
 
 - name: Include tasks to configure S3 deep sleep
   ansible.builtin.include_tasks: configure_s3_sleep.ansible.yml
-  when: s3_deep_sleep_enable | bool
+  when:
+    - s3_deep_sleep_enable | bool
+    - ansible_facts['distribution'] == 'Fedora'  # GRUB path is Fedora's; not ported to other distros
+
+- name: Skip S3 deep sleep on non-Fedora
+  ansible.builtin.debug:
+    msg: "s3_deep_sleep is only supported on Fedora; skipping on {{ ansible_facts['distribution'] }}."
+  when: ansible_facts['distribution'] != 'Fedora'

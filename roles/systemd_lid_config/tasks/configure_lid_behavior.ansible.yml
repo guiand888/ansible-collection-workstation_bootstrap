@@ -1,42 +1,29 @@
 ---
-# Child task file: configure_lid_behavior.ansible.yml
-# This file configures the systemd lid-closing behavior in logind.conf.
-
-- name: Ensure systemd-logind service is available
-  ansible.builtin.stat:
-    path: /etc/systemd/logind.conf
-  register: logind_conf_stat
-  # Check if logind.conf exists before attempting to modify it.
+# Write a logind drop-in instead of editing /etc/systemd/logind.conf, which
+# does not exist on every distro (e.g. openSUSE Tumbleweed ships it under /usr/etc).
+- name: Ensure the logind drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/logind.conf.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
 
 - name: Configure lid closing behavior
-  when: logind_conf_stat.stat.exists
-  block:
-    - name: Set HandleLidSwitch action to '{{ systemd_lid_config_actions.handle_lid_switch }}'
-      ansible.builtin.lineinfile:
-        path: /etc/systemd/logind.conf
-        state: present
-        regexp: '^#?HandleLidSwitch=' # Covers commented and uncommented lines
-        line: "HandleLidSwitch={{ systemd_lid_config_actions.handle_lid_switch }}"
-
-    - name: Set HandleLidSwitchExternalPower action to '{{ systemd_lid_config_actions.handle_lid_switch_external_power }}'
-      ansible.builtin.lineinfile:
-        path: /etc/systemd/logind.conf
-        state: present
-        regexp: '^#?HandleLidSwitchExternalPower='
-        line: "HandleLidSwitchExternalPower={{ systemd_lid_config_actions.handle_lid_switch_external_power }}"
-
-    - name: Set HandleLidSwitchDocked action to '{{ systemd_lid_config_actions.handle_lid_switch_docked }}'
-      ansible.builtin.lineinfile:
-        path: /etc/systemd/logind.conf
-        state: present
-        regexp: '^#?HandleLidSwitchDocked='
-        line: "HandleLidSwitchDocked={{ systemd_lid_config_actions.handle_lid_switch_docked }}"
+  ansible.builtin.copy:
+    dest: /etc/systemd/logind.conf.d/50-lid.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Login]
+      HandleLidSwitch={{ systemd_lid_config_actions.handle_lid_switch }}
+      HandleLidSwitchExternalPower={{ systemd_lid_config_actions.handle_lid_switch_external_power }}
+      HandleLidSwitchDocked={{ systemd_lid_config_actions.handle_lid_switch_docked }}
+  register: systemd_lid_config_dropin
 
 - name: Reload systemd-logind service to apply changes
   ansible.builtin.systemd_service:
     name: systemd-logind
     state: reloaded
-  when: logind_conf_stat.stat.exists and
-        (systemd_lid_config_actions.handle_lid_switch is changed or
-         systemd_lid_config_actions.handle_lid_switch_external_power is changed or
-         systemd_lid_config_actions.handle_lid_switch_docked is changed)
+  when: systemd_lid_config_dropin is changed
