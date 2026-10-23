@@ -1,10 +1,17 @@
-# SPDX-License-Identifier: MIT-0
 ---
-# handlers file for yum_repos
-
 - name: Refresh DNF cache
   ansible.builtin.dnf:
     update_cache: true
   become: true
   listen: refresh yum repos cache
-  when: yum_repos_refresh_cache | bool
+  when:
+    - yum_repos_refresh_cache | bool
+    - ansible_facts['pkg_mgr'] in ['dnf', 'dnf5']
+
+- name: Refresh zypper cache
+  ansible.builtin.command: zypper --non-interactive --gpg-auto-import-keys refresh
+  become: true
+  listen: refresh yum repos cache
+  when:
+    - yum_repos_refresh_cache | bool
+    - ansible_facts['pkg_mgr'] == 'zypper'

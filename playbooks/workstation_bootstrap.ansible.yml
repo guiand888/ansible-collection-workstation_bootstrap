@@ -23,7 +23,7 @@
     workstation_enable_apps: true
     workstation_enable_crypto: true
     workstation_enable_services: true
-    workstation_enable_zram: true
+    workstation_enable_zswap: true
 
   tasks:
     - name: Display all role default variables
@@ -53,8 +53,6 @@
               {{ role_defaults_base }}/ansible_collections/guiand888/workstation_bootstrap/roles/{{ item }}/defaults/main.yml
           loop:
             - ansible_vault_bitwarden
-            - appimage_daemon
-            - aws_cli
             - dnf_fastestmirror
             - ffmpeg_full
             - firefox_flatpak
@@ -64,7 +62,6 @@
             - hostname_config
             - keyboard_config
             - ledger_udev
-            - lid_behavior
             - nextcloud_client
             - packages
             - s3_deep_sleep
@@ -72,7 +69,7 @@
             - systemd_lid_config
             - timezone_config
             - trezor_udev
-            - zram_config
+            - zswap_config
 
     # System Configuration Block
     - name: System Configuration
@@ -110,17 +107,17 @@
           tags:
             - keyboard
 
-    # ZRAM Configuration Block
-    - name: ZRAM Configuration
-      when: workstation_enable_zram | bool
+    # ZSWAP Configuration Block
+    - name: ZSWAP Configuration
+      when: workstation_enable_zswap | bool
       tags:
-        - zram
+        - zswap
       block:
-        - name: Configure ZRAM
+        - name: Configure ZSWAP
           ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.zram_config
+            name: guiand888.workstation_bootstrap.zswap_config
           tags:
-            - zram
+            - zswap
 
     # Hardware Configuration Block
     - name: Hardware Configuration
@@ -133,12 +130,6 @@
             name: guiand888.workstation_bootstrap.s3_deep_sleep
           tags:
             - sleep
-
-        - name: Configure lid behavior
-          ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.lid_behavior
-          tags:
-            - lid
 
         - name: Configure systemd lid settings
           ansible.builtin.include_role:
@@ -200,18 +191,6 @@
       tags:
         - apps
       block:
-        - name: Configure AppImage daemon
-          ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.appimage_daemon
-          tags:
-            - appimage
-
-        - name: Install AWS CLI
-          ansible.builtin.include_role:
-            name: guiand888.workstation_bootstrap.aws_cli
-          tags:
-            - aws
-
         - name: Configure Nextcloud client
           ansible.builtin.include_role:
             name: guiand888.workstation_bootstrap.nextcloud_client
@@ -261,4 +240,4 @@
         msg: |
           Workstation setup completed successfully!
           To view all default variables: ansible-playbook workstation-setup.yml --tags show-defaults
-          Available tags: system, zram, hardware, packages, flatpak, apps, services, crypto
+          Available tags: system, zswap, hardware, packages, flatpak, apps, services, crypto

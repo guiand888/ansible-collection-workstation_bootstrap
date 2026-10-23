@@ -1,0 +1,35 @@
+---
+# Child task file: apply_runtime.ansible.yml
+# Writes the zswap parameters to /sys/module/zswap/parameters so no reboot is needed.
+# Parameters missing on the running kernel (e.g. zpool on recent kernels) are skipped.
+
+- name: Read current zswap runtime parameters
+  ansible.builtin.slurp:
+    src: "/sys/module/zswap/parameters/{{ item.key }}"
+  loop: "{{ zswap_config_params | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: zswap_config_runtime_current
+  failed_when: false
+
+- name: Apply zswap runtime parameters
+  ansible.builtin.command:
+    cmd: "tee /sys/module/zswap/parameters/{{ item.item.key }}"
+    stdin: "{{ item.item.value }}"
+    stdin_add_newline: false
+  loop: "{{ zswap_config_runtime_current.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  when:
+    - item.content is defined
+    - >-
+      ({'Y': '1', 'N': '0'}).get((item.content | b64decode | trim), (item.content | b64decode | trim))
+      != (item.item.value | string)
+  changed_when: true
+  register: zswap_config_runtime_applied
+
+- name: Display runtime parameter message
+  ansible.builtin.debug:
+    msg: >-
+      zswap runtime parameters {{ 'applied' if zswap_config_runtime_applied is changed
+      else ('not applied in check mode' if ansible_check_mode else 'already up to date') }}

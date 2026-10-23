@@ -1,0 +1,44 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for zswap_config
+# Order matters: a disk swap must exist before zram is turned off, otherwise the
+# system is left without swap (or OOMs while zram is swapped off).
+
+- name: Configure zswap
+  when:
+    - zswap_config_enable | bool
+    - ansible_facts['os_family'] in zswap_config_supported_os_families
+  become: true
+  block:
+    - name: Include tasks to ensure a backing swap device exists
+      ansible.builtin.include_tasks: ensure_backing_swap.ansible.yml
+
+    - name: Include tasks to disable swap-on-zram
+      ansible.builtin.include_tasks: disable_zram.ansible.yml
+      when: zswap_config_disable_zram | bool
+
+    - name: Include tasks to persist zswap on the kernel command line
+      ansible.builtin.include_tasks: configure_kernel_cmdline.ansible.yml
+      when: zswap_config_manage_kernel_cmdline | bool
+
+    - name: Include tasks to configure zswap sysctl parameters
+      ansible.builtin.include_tasks: configure_sysctl.ansible.yml
+      when: zswap_config_configure_sysctl | bool
+
+    - name: Include tasks to apply zswap parameters at runtime
+      ansible.builtin.include_tasks: apply_runtime.ansible.yml
+      when: zswap_config_apply_runtime | bool
+
+    - name: Remind to reboot to validate boot-time parameters
+      ansible.builtin.debug:
+        msg: >-
+          zswap configured. Reboot, then check /sys/module/zswap/parameters/* and /proc/cmdline:
+          runtime writes can hide a boot-time compressor fallback.
+      when: zswap_config_manage_kernel_cmdline | bool
+
+- name: Skip zswap on unsupported OS
+  ansible.builtin.debug:
+    msg: "zswap_config supports Fedora and openSUSE Tumbleweed; skipping on {{ ansible_facts['distribution'] }}."
+  when:
+    - zswap_config_enable | bool
+    - ansible_facts['os_family'] not in zswap_config_supported_os_families

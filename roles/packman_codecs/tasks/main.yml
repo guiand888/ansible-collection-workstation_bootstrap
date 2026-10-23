@@ -1,0 +1,25 @@
+---
+# openSUSE counterpart of ffmpeg_full: add Packman and switch the multimedia
+# packages to its builds.
+- name: Configure Packman codecs
+  when:
+    - packman_codecs_enable | bool
+    - ansible_facts['pkg_mgr'] == 'zypper'
+  become: true
+  block:
+    - name: Add the Packman repository
+      community.general.zypper_repository:
+        name: "{{ packman_codecs_repo_name }}"
+        repo: "{{ packman_codecs_repo_url }}"
+        auto_import_keys: true
+        priority: "{{ packman_codecs_priority }}"
+        state: present
+        runrefresh: true
+
+    - name: Switch multimedia packages to Packman
+      ansible.builtin.command:
+        cmd: >-
+          zypper --non-interactive install --from {{ packman_codecs_repo_name }}
+          --allow-vendor-change {{ packman_codecs_packages | join(' ') }}
+      register: packman_codecs_switch
+      changed_when: "'Nothing to do' not in packman_codecs_switch.stdout"

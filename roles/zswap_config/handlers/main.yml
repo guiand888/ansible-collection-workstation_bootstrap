@@ -1,0 +1,14 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for zswap_config
+# Fedora needs no handler: grubby rewrites the boot entries in place.
+
+- name: Refresh openSUSE GRUB2 configuration
+  ansible.builtin.command:
+    cmd: update-bootloader --refresh
+  changed_when: true
+
+- name: Update openSUSE BLS boot entries
+  ansible.builtin.command:
+    cmd: sdbootutil update-all-entries
+  changed_when: true

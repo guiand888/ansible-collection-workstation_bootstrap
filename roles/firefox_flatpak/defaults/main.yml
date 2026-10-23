@@ -24,3 +24,10 @@ firefox_flatpak_rpm_profile_path: "{{ ansible_env.HOME }}/.mozilla/firefox"
 # firefox_flatpak_flatpak_profile_path: Path to Flatpak Firefox profiles
 # Typical path: /home/username/.var/app/org.mozilla.firefox/.mozilla/firefox
 firefox_flatpak_flatpak_profile_path: "{{ ansible_env.HOME }}/.var/app/org.mozilla.firefox/.mozilla/firefox"
+
+# Native browser packages removed when firefox_flatpak_remove_rpm is true.
+# Override per distro (e.g. MozillaFirefox on openSUSE).
+firefox_flatpak_rpm_packages:
+  - anaconda-webui
+  - firefox-langpacks
+  - firefox

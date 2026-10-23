@@ -1,0 +1,96 @@
+---
+# Child task file: create_swapfile.ansible.yml
+# Creates, registers (fstab) and activates the backing swapfile.
+
+- name: Set swapfile directory
+  ansible.builtin.set_fact:
+    zswap_config_swapfile_dir: "{{ zswap_config_swapfile_path | dirname }}"
+
+- name: Ensure the swapfile directory exists
+  ansible.builtin.file:
+    path: "{{ zswap_config_swapfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Detect the filesystem holding the swapfile directory
+  ansible.builtin.command:
+    cmd: findmnt --noheadings --raw --output FSTYPE,TARGET,UUID --target {{ zswap_config_swapfile_dir }}
+  register: zswap_config_findmnt
+  changed_when: false
+  check_mode: false
+
+- name: Record filesystem details
+  ansible.builtin.set_fact:
+    zswap_config_swap_fstype: "{{ zswap_config_findmnt.stdout.split()[0] }}"
+    zswap_config_swap_mount_target: "{{ zswap_config_findmnt.stdout.split()[1] }}"
+    zswap_config_swap_fs_uuid: "{{ zswap_config_findmnt.stdout.split()[2] }}"
+
+- name: Create and mount the dedicated btrfs swap subvolume
+  ansible.builtin.include_tasks: create_btrfs_subvolume.ansible.yml
+  when:
+    - zswap_config_swap_fstype == 'btrfs'
+    - zswap_config_swap_btrfs_subvolume | length > 0
+    - zswap_config_swap_mount_target != zswap_config_swapfile_dir
+
+- name: Check whether the swapfile exists
+  ansible.builtin.stat:
+    path: "{{ zswap_config_swapfile_path }}"
+  register: zswap_config_swapfile_stat
+
+- name: Create the swapfile on btrfs (NOCOW and preallocation handled by btrfs-progs)
+  ansible.builtin.command:
+    cmd: btrfs filesystem mkswapfile --size {{ zswap_config_swapfile_size }} {{ zswap_config_swapfile_path }}
+  when:
+    - zswap_config_swap_fstype == 'btrfs'
+    - not zswap_config_swapfile_stat.stat.exists
+  changed_when: true
+
+- name: Create the swapfile on other filesystems
+  when:
+    - zswap_config_swap_fstype != 'btrfs'
+    - not zswap_config_swapfile_stat.stat.exists
+  block:
+    - name: Preallocate the swapfile
+      ansible.builtin.command:
+        cmd: fallocate --length {{ zswap_config_swapfile_size }} {{ zswap_config_swapfile_path }}
+      changed_when: true
+
+    - name: Restrict swapfile permissions
+      ansible.builtin.file:
+        path: "{{ zswap_config_swapfile_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Format the swapfile
+      ansible.builtin.command:
+        cmd: mkswap {{ zswap_config_swapfile_path }}
+      changed_when: true
+
+- name: Register the swapfile in fstab
+  ansible.posix.mount:
+    src: "{{ zswap_config_swapfile_path }}"
+    path: none
+    fstype: swap
+    opts: "defaults,pri={{ zswap_config_swapfile_priority }}"
+    passno: "0"
+    dump: "0"
+    state: present
+  register: zswap_config_swap_fstab
+
+- name: Reload systemd units generated from fstab
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  when: zswap_config_swap_fstab is changed
+
+- name: Activate the swapfile
+  ansible.builtin.command:
+    cmd: swapon {{ zswap_config_swapfile_path }}
+  changed_when: true
+  when: not ansible_check_mode
+
+- name: Display swapfile creation message
+  ansible.builtin.debug:
+    msg: "Backing swapfile active: {{ zswap_config_swapfile_path }} ({{ zswap_config_swapfile_size }})"

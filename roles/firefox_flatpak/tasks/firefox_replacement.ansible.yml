@@ -14,11 +14,9 @@
 - name: Remove Firefox RPM and langpacks
   ansible.builtin.package:
     name:
-      - anaconda-webui
-      - firefox-langpacks
-      - firefox
+      "{{ firefox_flatpak_rpm_packages }}"
     state: absent
-    allowerasing: true
+    allowerasing: "{{ true if ansible_facts['pkg_mgr'] in ['dnf', 'dnf5'] else omit }}"
   become: true
   ignore_errors: "{{ ansible_check_mode }}"
   when: firefox_flatpak_remove_rpm | bool

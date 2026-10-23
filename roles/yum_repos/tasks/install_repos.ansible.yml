@@ -4,12 +4,12 @@
 
 - name: Check if system supports YUM/DNF
   ansible.builtin.stat:
-    path: /etc/yum.repos.d
+    path: "{{ yum_repos_install_dir }}"
   register: yum_repos_dir_stat
 
 - name: Display warning if YUM repos directory not found
   ansible.builtin.debug:
-    msg: "Warning: /etc/yum.repos.d directory not found - skipping repository installation"
+    msg: "Warning: {{ yum_repos_install_dir }} directory not found - skipping repository installation"
   when: not yum_repos_dir_stat.stat.exists
 
 - name: Install repository files from configured source directory

@@ -1,0 +1,62 @@
+---
+# Child task file: create_btrfs_subvolume.ansible.yml
+# Creates the dedicated swap subvolume (if missing) through a temporary mount of the btrfs
+# top level (subvolid=5), then mounts it on the swapfile directory and persists it in fstab.
+
+- name: Install btrfs-progs
+  ansible.builtin.package:
+    name: btrfs-progs
+    state: present
+
+- name: Create the swap subvolume if it does not exist
+  block:
+    - name: Create a temporary mount point
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: zswap_config_
+      register: zswap_config_btrfs_tmp
+      check_mode: false
+
+    - name: Mount the btrfs top level
+      ansible.posix.mount:
+        src: "UUID={{ zswap_config_swap_fs_uuid }}"
+        path: "{{ zswap_config_btrfs_tmp.path }}"
+        fstype: btrfs
+        opts: subvolid=5
+        state: ephemeral
+
+    - name: Check whether the swap subvolume exists
+      ansible.builtin.command:
+        cmd: btrfs subvolume show {{ zswap_config_btrfs_tmp.path }}/{{ zswap_config_swap_btrfs_subvolume }}
+      register: zswap_config_subvolume_show
+      changed_when: false
+      failed_when: false
+      check_mode: false
+
+    - name: Create the swap subvolume
+      ansible.builtin.command:
+        cmd: btrfs subvolume create {{ zswap_config_btrfs_tmp.path }}/{{ zswap_config_swap_btrfs_subvolume }}
+      when: zswap_config_subvolume_show.rc != 0
+      changed_when: true
+  always:
+    - name: Unmount the btrfs top level
+      ansible.posix.mount:
+        path: "{{ zswap_config_btrfs_tmp.path }}"
+        state: unmounted
+      when: zswap_config_btrfs_tmp is defined and zswap_config_btrfs_tmp.path is defined
+
+    - name: Remove the temporary mount point
+      ansible.builtin.file:
+        path: "{{ zswap_config_btrfs_tmp.path }}"
+        state: absent
+      when: zswap_config_btrfs_tmp is defined and zswap_config_btrfs_tmp.path is defined
+
+- name: Mount the swap subvolume and persist it in fstab
+  ansible.posix.mount:
+    src: "UUID={{ zswap_config_swap_fs_uuid }}"
+    path: "{{ zswap_config_swapfile_dir }}"
+    fstype: btrfs
+    opts: "subvol={{ zswap_config_swap_btrfs_subvolume }},{{ zswap_config_swap_mount_options }}"
+    passno: "0"
+    dump: "0"
+    state: mounted

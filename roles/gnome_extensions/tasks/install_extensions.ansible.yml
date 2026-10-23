@@ -7,7 +7,7 @@
   # This task dynamically generates the full package names required by DNF.
 
 - name: Install GNOME Shell extensions via DNF with progress display
-  ansible.builtin.dnf:
+  ansible.builtin.package:
     name: "{{ item }}"
     state: present
   loop: "{{ gnome_extensions_dnf_package_names | default([]) }}"

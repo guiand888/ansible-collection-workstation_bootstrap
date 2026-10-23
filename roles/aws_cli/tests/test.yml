@@ -1,7 +1,0 @@
-# SPDX-License-Identifier: MIT-0
----
-- name: Test aws_cli role
-  hosts: localhost
-  remote_user: root
-  roles:
-    - aws_cli

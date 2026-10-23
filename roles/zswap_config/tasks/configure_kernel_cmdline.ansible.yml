@@ -1,0 +1,140 @@
+---
+# Child task file: configure_kernel_cmdline.ansible.yml
+# Persists the zswap.* parameters on the kernel command line. Every zswap.* token is rewritten
+# (stale ones such as a removed zswap.zpool= are dropped), other arguments are left untouched.
+#
+# Fedora (BLS): grubby rewrites the existing boot entries and also updates /etc/kernel/cmdline and
+#   GRUB_CMDLINE_LINUX in /etc/default/grub, so future kernels pick the arguments up. grub2-mkconfig
+#   would NOT rewrite BLS entries.
+# openSUSE: depends on the bootloader (LOADER_TYPE in /etc/sysconfig/bootloader).
+
+- name: Configure the kernel command line with grubby
+  when: ansible_facts['os_family'] == 'RedHat'
+  block:
+    - name: Check for /etc/kernel/cmdline
+      ansible.builtin.stat:
+        path: /etc/kernel/cmdline
+      register: zswap_config_kernel_cmdline_stat
+
+    - name: Read the command line used for new kernels
+      ansible.builtin.slurp:
+        src: "{{ '/etc/kernel/cmdline' if zswap_config_kernel_cmdline_stat.stat.exists else '/proc/cmdline' }}"
+      register: zswap_config_cmdline_raw
+
+    - name: Compute current zswap arguments
+      ansible.builtin.set_fact:
+        zswap_config_cmdline_current: >-
+          {{ (zswap_config_cmdline_raw.content | b64decode).split() | select('match', '^zswap\.') | list }}
+        zswap_config_cmdline_needs_update: >-
+          {{ (zswap_config_cmdline_raw.content | b64decode).split() | select('match', '^zswap\.') | list | sort
+             != zswap_config_cmdline_wanted | sort }}
+
+    - name: Remove stale zswap arguments with grubby
+      ansible.builtin.command:
+        argv:
+          - grubby
+          - --update-kernel=ALL
+          - "--remove-args={{ zswap_config_cmdline_current | map('regex_replace', '=.*$', '') | join(' ') }}"
+      when:
+        - zswap_config_cmdline_current | length > 0
+        - zswap_config_cmdline_needs_update | bool
+      changed_when: true
+
+    - name: Add zswap arguments with grubby
+      ansible.builtin.command:
+        argv:
+          - grubby
+          - --update-kernel=ALL
+          - "--args={{ zswap_config_cmdline_wanted | join(' ') }}"
+      when: zswap_config_cmdline_needs_update | bool
+      changed_when: true
+      register: zswap_config_grubby
+
+    - name: Display grubby message
+      ansible.builtin.debug:
+        msg: >-
+          Kernel command line {{ ('would be updated: ' if ansible_check_mode else 'updated: ') ~ (zswap_config_cmdline_wanted | join(' '))
+          if zswap_config_cmdline_needs_update | bool else 'already up to date' }}
+
+- name: Configure the kernel command line on openSUSE
+  when: ansible_facts['os_family'] == 'Suse'
+  block:
+    - name: Read the bootloader configuration
+      ansible.builtin.slurp:
+        src: /etc/sysconfig/bootloader
+      register: zswap_config_bootloader_raw
+      failed_when: false
+
+    - name: Detect the bootloader type
+      ansible.builtin.set_fact:
+        zswap_config_loader_type: >-
+          {{ (zswap_config_bootloader_raw.content | default('') | b64decode
+              | regex_search('(?m)^LOADER_TYPE="?([^"\s]*)', '\1')) | default([''], true) | first }}
+
+    - name: Fail on an unrecognised bootloader
+      ansible.builtin.fail:
+        msg: >-
+          Unsupported or undetected bootloader '{{ zswap_config_loader_type }}' (LOADER_TYPE in /etc/sysconfig/bootloader).
+          Supported: grub2, grub2-efi, grub2-bls, systemd-boot. Set zswap_config_manage_kernel_cmdline: false and add
+          {{ zswap_config_cmdline_wanted | join(' ') }} to the kernel command line manually.
+      when: zswap_config_loader_type not in ['grub2', 'grub2-efi', 'grub2-bls', 'systemd-boot']
+
+    - name: Configure GRUB2 kernel arguments
+      when: zswap_config_loader_type in ['grub2', 'grub2-efi']
+      block:
+        - name: Read /etc/default/grub
+          ansible.builtin.slurp:
+            src: /etc/default/grub
+          register: zswap_config_default_grub
+
+        - name: Compute the new GRUB_CMDLINE_LINUX_DEFAULT
+          ansible.builtin.set_fact:
+            zswap_config_grub_current: >-
+              {{ ((zswap_config_default_grub.content | b64decode
+                   | regex_search('(?m)^GRUB_CMDLINE_LINUX_DEFAULT="([^"]*)"', '\1')) | default([''], true) | first).split() }}
+
+        - name: Set GRUB_CMDLINE_LINUX_DEFAULT
+          ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+            line: >-
+              GRUB_CMDLINE_LINUX_DEFAULT="{{ (zswap_config_grub_current | reject('match', '^zswap\.') | list
+              + zswap_config_cmdline_wanted) | join(' ') }}"
+          when: >-
+            zswap_config_grub_current | select('match', '^zswap\.') | list | sort
+            != zswap_config_cmdline_wanted | sort
+          notify: Refresh openSUSE GRUB2 configuration
+
+    - name: Configure BLS / systemd-boot kernel arguments
+      when: zswap_config_loader_type in ['grub2-bls', 'systemd-boot']
+      block:
+        - name: Check for /etc/kernel/cmdline
+          ansible.builtin.stat:
+            path: /etc/kernel/cmdline
+          register: zswap_config_kernel_cmdline_stat
+
+        - name: Fail if /etc/kernel/cmdline is missing
+          ansible.builtin.fail:
+            msg: /etc/kernel/cmdline not found; cannot manage the kernel command line for {{ zswap_config_loader_type }}.
+          when: not zswap_config_kernel_cmdline_stat.stat.exists
+
+        - name: Read /etc/kernel/cmdline
+          ansible.builtin.slurp:
+            src: /etc/kernel/cmdline
+          register: zswap_config_cmdline_raw
+
+        - name: Compute current kernel arguments
+          ansible.builtin.set_fact:
+            zswap_config_cmdline_all: "{{ (zswap_config_cmdline_raw.content | b64decode).split() }}"
+
+        - name: Rewrite zswap arguments in /etc/kernel/cmdline
+          ansible.builtin.copy:
+            dest: /etc/kernel/cmdline
+            owner: root
+            group: root
+            mode: "0644"
+            content: "{{ (zswap_config_cmdline_all | reject('match', '^zswap\\.') | list + zswap_config_cmdline_wanted) | join(' ') }}\n"
+          when: >-
+            zswap_config_cmdline_all | select('match', '^zswap\.') | list | sort
+            != zswap_config_cmdline_wanted | sort
+          notify: Update openSUSE BLS boot entries
