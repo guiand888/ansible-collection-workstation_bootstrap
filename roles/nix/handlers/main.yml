@@ -1,0 +1,10 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for nix
+# The socket (openSUSE) re-activates the service on demand, so restarting the service is enough.
+
+- name: Restart Nix daemon
+  ansible.builtin.systemd_service:
+    name: nix-daemon.service
+    state: restarted
+  when: nix_enable_service | bool

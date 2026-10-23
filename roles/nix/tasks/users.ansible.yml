@@ -1,0 +1,23 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Warn when no user is allowed to reach the daemon
+  ansible.builtin.debug:
+    msg: >-
+      nix_users is empty: on this system the Nix daemon socket is restricted to the
+      {{ nix_group }} group, so no regular user can use Nix until they are added.
+  when: nix_users | length == 0
+
+# The group is created by the package's sysusers scriptlet, so it is absent in check mode on a fresh host.
+- name: Look up the nix-users group
+  ansible.builtin.getent:
+    database: group
+    key: "{{ nix_group }}"
+    fail_key: false
+
+- name: Add users to the nix-users group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: "{{ nix_group }}"
+    append: true
+  loop: "{{ nix_users }}"
+  when: getent_group[nix_group] is not none or not ansible_check_mode

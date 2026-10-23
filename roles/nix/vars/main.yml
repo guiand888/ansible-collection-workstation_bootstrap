@@ -1,0 +1,44 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for nix
+# Internal values, not meant to be overridden. User-facing settings live in defaults/main.yml.
+
+nix_supported_os_families:
+  - RedHat
+  - Suse
+
+# Fedora splits the package: nix-daemon and nix-legacy (nix-shell, nix-env...) are only weak
+# dependencies of nix, so name them to survive install_weak_deps=False.
+# openSUSE ships everything in the single nix package.
+nix_packages_by_family:
+  RedHat:
+    - nix
+    - nix-daemon
+    - nix-legacy
+  Suse:
+    - nix
+
+# Fedora runs the service (as documented in its README.fedora.md); openSUSE socket-activates it.
+nix_unit_by_family:
+  RedHat: nix-daemon.service
+  Suse: nix-daemon.socket
+
+# openSUSE's socket is 0660 root:nix-users, so membership is mandatory there.
+nix_group: nix-users
+nix_group_required_by_family:
+  RedHat: false
+  Suse: true
+
+nix_ssl_cert_file_by_family:
+  RedHat: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+  Suse: /etc/ssl/ca-bundle.pem
+
+nix_family_packages: "{{ nix_packages_by_family[ansible_facts['os_family']] }}"
+nix_family_unit: "{{ nix_unit_by_family[ansible_facts['os_family']] }}"
+nix_family_group_required: "{{ nix_group_required_by_family[ansible_facts['os_family']] }}"
+
+nix_effective_ssl_cert_file: >-
+  {{ nix_ssl_cert_file if (nix_ssl_cert_file | length) > 0
+     else nix_ssl_cert_file_by_family[ansible_facts['os_family']] }}
+
+nix_effective_settings: "{{ nix_settings | combine({'ssl-cert-file': nix_effective_ssl_cert_file}) }}"

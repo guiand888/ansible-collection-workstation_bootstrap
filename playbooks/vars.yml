@@ -359,3 +359,24 @@ zswap_config_swap_btrfs_subvolume: "@swap"
 
 # zswap_config_swap_mount_options: Mount options for the swap subvolume
 zswap_config_swap_mount_options: noatime,nosuid,nodev,noexec,x-systemd.device-timeout=0
+
+# =============================================================================
+# NIX CONFIGURATION
+# =============================================================================
+# nix_enable: Whether to install and configure the distro-packaged Nix daemon
+nix_enable: true
+
+# nix_users: Users added to nix-users (mandatory on openSUSE, ignored on Fedora)
+nix_users: []
+
+# nix_settings: Settings written to the role-managed nix config (extra- keys append to the packaged value)
+nix_settings:
+  sandbox: "true"
+  extra-experimental-features: nix-command flakes
+  extra-nix-path: nixpkgs=flake:nixpkgs
+
+# nix_ssl_cert_file: CA bundle for the daemon ("" = per-distro default)
+nix_ssl_cert_file: ""
+
+# nix_smoke_test: Run `nix store info` as the first nix_users entry after setup
+nix_smoke_test: false

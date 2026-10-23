@@ -44,6 +44,9 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `nextcloud_client` - Configure Nextcloud client
 - `ansible_vault_bitwarden` - Install Bitwarden CLI and ansible-vault integration
 
+### Developer Tooling
+- `nix` - Distro-packaged multi-user Nix daemon (Fedora, openSUSE Tumbleweed)
+
 ### Service Management
 - `service_management` - Manage systemd services
 

@@ -1,0 +1,5 @@
+# {{ ansible_managed }}
+# Included from {{ nix_config_file }}. Edit via the nix role variables, not by hand.
+{% for name, value in nix_effective_settings.items() %}
+{{ name }} = {{ value }}
+{% endfor %}
