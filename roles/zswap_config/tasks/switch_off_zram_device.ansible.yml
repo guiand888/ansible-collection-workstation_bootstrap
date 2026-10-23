@@ -1,0 +1,27 @@
+---
+# Child task file: switch_off_zram_device.ansible.yml
+# Loop body for disable_zram.ansible.yml (loop variable: zswap_config_zram_device, e.g. /dev/zram0)
+
+- name: Swap off the zram device
+  ansible.builtin.command:
+    cmd: swapoff {{ zswap_config_zram_device }}
+  changed_when: true
+  failed_when: false
+  register: zswap_config_zram_swapoff
+
+- name: Fail if the zram device could not be swapped off
+  ansible.builtin.fail:
+    msg: "swapoff {{ zswap_config_zram_device }} failed (not enough free memory/swap to absorb it?): {{ zswap_config_zram_swapoff.stderr }}"
+  when: zswap_config_zram_swapoff.rc != 0
+
+- name: Stop the zram setup unit
+  ansible.builtin.systemd_service:
+    name: "systemd-zram-setup@{{ zswap_config_zram_device | basename }}.service"
+    state: stopped
+  failed_when: false
+
+- name: Release the zram device memory
+  ansible.builtin.command:
+    cmd: zramctl --reset {{ zswap_config_zram_device }}
+  changed_when: true
+  failed_when: false

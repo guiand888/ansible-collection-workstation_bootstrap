@@ -1,0 +1,36 @@
+---
+# Child task file: ensure_backing_swap.ansible.yml
+# zswap only compresses pages on their way to a swap device; without one it does nothing.
+# Stock Fedora has zram as its only swap, so a disk swap may have to be created.
+
+- name: List active swap devices
+  ansible.builtin.command:
+    cmd: swapon --noheadings --raw --show=NAME
+  register: zswap_config_swapon
+  changed_when: false
+  check_mode: false
+
+- name: Split active swap into zram and disk swap
+  ansible.builtin.set_fact:
+    zswap_config_zram_swaps: "{{ zswap_config_swapon.stdout_lines | select('match', '^/dev/zram') | list }}"
+    zswap_config_disk_swaps: "{{ zswap_config_swapon.stdout_lines | reject('match', '^/dev/zram') | list }}"
+
+- name: Create the backing swapfile
+  ansible.builtin.include_tasks: create_swapfile.ansible.yml
+  when:
+    - zswap_config_disk_swaps | length == 0
+    - zswap_config_swapfile_enable | bool
+
+- name: Fail when there is no disk swap and none may be created
+  ansible.builtin.fail:
+    msg: >-
+      No non-zram swap is active and zswap_config_swapfile_enable is false. zswap needs a real swap
+      device: provision one, or enable zswap_config_swapfile_enable. zram has not been touched.
+  when:
+    - zswap_config_disk_swaps | length == 0
+    - not (zswap_config_swapfile_enable | bool)
+
+- name: Display backing swap message
+  ansible.builtin.debug:
+    msg: "Backing swap already active: {{ zswap_config_disk_swaps | join(', ') }}"
+  when: zswap_config_disk_swaps | length > 0

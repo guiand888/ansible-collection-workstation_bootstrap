@@ -1,0 +1,79 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for zswap_config
+# Defaults mirror the reference workstation, except where noted as an improvement.
+
+# zswap_config_enable: Whether to run this role at all
+zswap_config_enable: true
+
+# zswap_config_disable_zram: Detect swap-on-zram and turn it off (zswap in front of zram is counter-productive).
+# Fedora ships zram enabled by default (zram-generator-defaults).
+zswap_config_disable_zram: true
+
+# --- zswap parameters (/sys/module/zswap/parameters/*, zswap.* on the kernel command line) ---
+
+# zswap_config_enabled: Turn zswap on. Not on by default in Fedora/openSUSE kernels (CONFIG_ZSWAP_DEFAULT_ON unset)
+zswap_config_enabled: true
+
+# zswap_config_compressor: Compression algorithm (the kernel default is lzo on Fedora)
+zswap_config_compressor: zstd
+
+# zswap_config_max_pool_percent: Maximum share of RAM the compressed pool may use
+zswap_config_max_pool_percent: 20
+
+# zswap_config_accept_threshold_percent: Pool fill level at which zswap resumes accepting pages after hitting the limit
+zswap_config_accept_threshold_percent: 90
+
+# zswap_config_shrinker_enabled: Write cold compressed pages back to the swap device under memory pressure
+zswap_config_shrinker_enabled: true
+
+# zswap_config_zpool: Allocator for the compressed pool. Leave empty on recent kernels, where the
+# parameter no longer exists (zsmalloc is the only allocator). Set e.g. "z3fold" only for older kernels.
+zswap_config_zpool: ""
+
+# --- Kernel command line ---
+
+# zswap_config_manage_kernel_cmdline: Persist the zswap.* parameters on the kernel command line
+zswap_config_manage_kernel_cmdline: true
+
+# zswap_config_apply_runtime: Also write the parameters to /sys/module/zswap/parameters so no reboot is needed
+zswap_config_apply_runtime: true
+
+# --- sysctl ---
+
+# zswap_config_configure_sysctl: Whether to configure the vm.* sysctls below
+zswap_config_configure_sysctl: true
+
+# zswap_config_sysctl_file: Drop-in written under /etc/sysctl.d/
+zswap_config_sysctl_file: /etc/sysctl.d/99-zswap.conf
+
+# zswap_config_swappiness: How aggressively the kernel swaps anonymous memory (0-200)
+zswap_config_swappiness: 10
+
+# zswap_config_page_cluster: Swap readahead is 2^N pages. Improvement over the kernel default (3):
+# readahead is wasted work for pages coming back from compressed RAM.
+zswap_config_page_cluster: 0
+
+# --- Backing swap (zswap needs a real swap device behind it) ---
+
+# zswap_config_swapfile_enable: Create a swapfile if no non-zram swap is active.
+# When false and no disk swap exists, the role fails before touching zram.
+zswap_config_swapfile_enable: true
+
+# zswap_config_swapfile_path: Swapfile location
+zswap_config_swapfile_path: /swap/swapfile
+
+# zswap_config_swapfile_size: Swapfile size (anything fallocate / btrfs mkswapfile --size accepts)
+zswap_config_swapfile_size: 32G
+
+# zswap_config_swapfile_priority: Swap priority written to /etc/fstab
+zswap_config_swapfile_priority: 0
+
+# zswap_config_swap_btrfs_subvolume: On btrfs, dedicated subvolume mounted on the swapfile's directory.
+# Set to "" to put the swapfile directly on the existing filesystem.
+zswap_config_swap_btrfs_subvolume: "@swap"
+
+# zswap_config_swap_mount_options: Mount options for the dedicated swap subvolume.
+# nodatacow/nodatasum are deliberately absent: btrfs applies them filesystem-wide, never per
+# subvolume; `btrfs filesystem mkswapfile` already makes the file NOCOW.
+zswap_config_swap_mount_options: noatime,nosuid,nodev,noexec,x-systemd.device-timeout=0

@@ -1,0 +1,67 @@
+---
+# Child task file: disable_zram.ansible.yml
+# Turns swap-on-zram off. Runs only after a disk swap is known to be active.
+# Fedora's documented method is overriding /etc/systemd/zram-generator.conf with an empty file
+# (not masking, not uninstalling); openSUSE's systemd-zram-service uses its own unit.
+
+- name: Check for zram-generator
+  ansible.builtin.stat:
+    path: "{{ zswap_config_zram_generator_path }}"
+  register: zswap_config_zram_generator_stat
+
+- name: Override the zram-generator configuration with an empty one
+  when: zswap_config_zram_generator_stat.stat.exists
+  block:
+    - name: Read the current zram-generator configuration
+      ansible.builtin.slurp:
+        src: "{{ zswap_config_zram_generator_conf }}"
+      register: zswap_config_zram_conf
+      failed_when: false
+
+    - name: Detect active (non-comment) zram-generator settings
+      ansible.builtin.set_fact:
+        zswap_config_zram_conf_active: >-
+          {{ (zswap_config_zram_conf.content | default('') | b64decode).splitlines()
+             | select('match', '^\s*[^#;\s]') | list | length > 0 }}
+
+    - name: Write a comment-only zram-generator configuration
+      ansible.builtin.copy:
+        dest: "{{ zswap_config_zram_generator_conf }}"
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # Managed by Ansible (zswap_config): swap-on-zram is disabled, zswap is used instead.
+          # An empty file overrides /usr/lib/systemd/zram-generator.conf.
+      when: zswap_config_zram_conf.content is not defined or zswap_config_zram_conf_active | bool
+      register: zswap_config_zram_conf_written
+
+    - name: Reload systemd so the zram swap units are no longer generated
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      when: zswap_config_zram_conf_written is changed
+
+- name: Check for openSUSE's zramswap service
+  ansible.builtin.stat:
+    path: "{{ zswap_config_zramswap_unit_path }}"
+  register: zswap_config_zramswap_stat
+
+- name: Stop and disable zramswap.service
+  ansible.builtin.systemd_service:
+    name: "{{ zswap_config_zramswap_unit }}"
+    state: stopped
+    enabled: false
+  when: zswap_config_zramswap_stat.stat.exists
+
+- name: Switch off remaining zram swap devices
+  ansible.builtin.include_tasks: switch_off_zram_device.ansible.yml
+  loop: "{{ zswap_config_zram_swaps }}"
+  loop_control:
+    loop_var: zswap_config_zram_device
+  when: not ansible_check_mode
+
+- name: Display zram message
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'zram swap disabled: ' ~ (zswap_config_zram_swaps | join(', '))
+         if zswap_config_zram_swaps | length > 0 else 'No active zram swap found' }}

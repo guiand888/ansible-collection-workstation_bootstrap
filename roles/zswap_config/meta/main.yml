@@ -1,0 +1,26 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: Guillaume Andre (@guiand888)
+  description: Configure zswap compressed swap cache, replacing swap-on-zram
+  company: personal
+
+  license: GPL-3.0-only
+
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: Fedora
+      versions:
+        - all
+    - name: opensuse
+      versions:
+        - all
+
+  galaxy_tags:
+    - zswap
+    - swap
+    - memory
+    - performance
+    - kernel
+
+dependencies: []

@@ -1,0 +1,32 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for zswap_config
+# Internal values, not meant to be overridden. User-facing settings live in defaults/main.yml.
+
+zswap_config_supported_os_families:
+  - RedHat
+  - Suse
+
+# Generator shipped by zram-generator (Fedora and openSUSE). Emptying its config disables swap-on-zram.
+zswap_config_zram_generator_path: /usr/lib/systemd/system-generators/zram-generator
+zswap_config_zram_generator_conf: /etc/systemd/zram-generator.conf
+
+# openSUSE's own swap-on-zram unit (package systemd-zram-service)
+zswap_config_zramswap_unit_path: /usr/lib/systemd/system/zramswap.service
+zswap_config_zramswap_unit: zramswap.service
+
+# zswap module parameters in the form used on the kernel command line (booleans as 1/0).
+zswap_config_params_base:
+  enabled: "{{ 1 if zswap_config_enabled | bool else 0 }}"
+  compressor: "{{ zswap_config_compressor }}"
+  max_pool_percent: "{{ zswap_config_max_pool_percent }}"
+  accept_threshold_percent: "{{ zswap_config_accept_threshold_percent }}"
+  shrinker_enabled: "{{ 1 if zswap_config_shrinker_enabled | bool else 0 }}"
+
+zswap_config_params: >-
+  {{ zswap_config_params_base
+     | combine({'zpool': zswap_config_zpool} if (zswap_config_zpool | string | length) > 0 else {}) }}
+
+# zswap.<name>=<value> tokens for the kernel command line
+zswap_config_cmdline_wanted: >-
+  {{ zswap_config_params.items() | map('join', '=') | map('regex_replace', '^', 'zswap.') | list }}

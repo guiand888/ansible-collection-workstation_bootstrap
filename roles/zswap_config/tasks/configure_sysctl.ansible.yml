@@ -1,0 +1,19 @@
+---
+# Child task file: configure_sysctl.ansible.yml
+# Writes the zswap-related vm.* sysctls to a drop-in under /etc/sysctl.d/
+
+- name: Configure zswap-related sysctl parameters
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: "{{ zswap_config_sysctl_file }}"
+    state: present
+    reload: true
+  loop:
+    - { key: 'vm.swappiness', value: '{{ zswap_config_swappiness }}' }
+    - { key: 'vm.page-cluster', value: '{{ zswap_config_page_cluster }}' }
+  register: zswap_config_sysctl_changed
+
+- name: Display sysctl configuration message
+  ansible.builtin.debug:
+    msg: "zswap sysctl parameters {{ 'configured in ' ~ zswap_config_sysctl_file if zswap_config_sysctl_changed is changed else 'already up to date' }}"
