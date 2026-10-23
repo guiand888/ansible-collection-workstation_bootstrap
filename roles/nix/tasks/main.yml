@@ -1,0 +1,37 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for nix
+
+- name: Configure Nix
+  when:
+    - nix_enable | bool
+    - ansible_facts['os_family'] in nix_supported_os_families
+  become: true
+  block:
+    - name: Include tasks to install Nix
+      ansible.builtin.include_tasks: install.ansible.yml
+
+    - name: Include tasks to configure Nix
+      ansible.builtin.include_tasks: configure.ansible.yml
+      when: nix_manage_config | bool
+
+    - name: Include tasks to add users to the nix-users group
+      ansible.builtin.include_tasks: users.ansible.yml
+      when: nix_family_group_required | bool
+
+    - name: Include tasks to enable the Nix daemon
+      ansible.builtin.include_tasks: service.ansible.yml
+      when: nix_enable_service | bool
+
+    - name: Remind to log in again
+      ansible.builtin.debug:
+        msg: >-
+          Nix installed. Log out and in again to pick up /etc/profile.d/nix*.sh and group membership,
+          then check with: nix-shell -p hello --run hello
+
+- name: Skip Nix on unsupported OS
+  ansible.builtin.debug:
+    msg: "nix supports Fedora and openSUSE Tumbleweed; skipping on {{ ansible_facts['distribution'] }}."
+  when:
+    - nix_enable | bool
+    - ansible_facts['os_family'] not in nix_supported_os_families

@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Enable and start the Nix daemon
+  ansible.builtin.systemd_service:
+    name: "{{ nix_family_unit }}"
+    enabled: true
+    state: started
+
+- name: Smoke test the daemon connection
+  ansible.builtin.command:
+    cmd: nix store info
+  become: true
+  become_user: "{{ nix_users | first }}"
+  changed_when: false
+  when:
+    - nix_smoke_test | bool
+    - nix_users | length > 0
+    - not ansible_check_mode

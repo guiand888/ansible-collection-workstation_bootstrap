@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# The packaged nix.conf is a %config file: keep it as shipped and add one !include line.
+# Nix's !include takes a single file (no globs), and a missing file is tolerated with "!include".
+
+- name: Write role-managed Nix settings
+  ansible.builtin.template:
+    src: nix-workstation.conf.j2
+    dest: "{{ nix_managed_config_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Nix daemon
+
+- name: Include role-managed settings from nix.conf
+  ansible.builtin.lineinfile:
+    path: "{{ nix_config_file }}"
+    line: "!include {{ nix_managed_config_file }}"
+    insertafter: EOF
+    create: false
+  notify: Restart Nix daemon

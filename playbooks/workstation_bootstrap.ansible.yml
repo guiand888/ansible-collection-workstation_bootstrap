@@ -24,6 +24,7 @@
     workstation_enable_crypto: true
     workstation_enable_services: true
     workstation_enable_zswap: true
+    workstation_enable_nix: true
 
   tasks:
     - name: Display all role default variables
@@ -63,6 +64,7 @@
             - keyboard_config
             - ledger_udev
             - nextcloud_client
+            - nix
             - packages
             - s3_deep_sleep
             - service_management
@@ -118,6 +120,18 @@
             name: guiand888.workstation_bootstrap.zswap_config
           tags:
             - zswap
+
+    # Nix Configuration Block
+    - name: Nix Configuration
+      when: workstation_enable_nix | bool
+      tags:
+        - nix
+      block:
+        - name: Configure Nix
+          ansible.builtin.include_role:
+            name: guiand888.workstation_bootstrap.nix
+          tags:
+            - nix
 
     # Hardware Configuration Block
     - name: Hardware Configuration

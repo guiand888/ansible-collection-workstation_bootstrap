@@ -1,0 +1,39 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for nix
+# Distro-packaged, multi-user (daemon) Nix. No upstream installer, SELinux is left alone.
+
+# nix_enable: Whether to run this role at all
+nix_enable: true
+
+# nix_manage_config: Write the managed settings file and include it from /etc/nix/nix.conf
+nix_manage_config: true
+
+# nix_enable_service: Enable and start the Nix daemon unit
+nix_enable_service: true
+
+# nix_users: Users added to the nix-users group. Required on openSUSE, where the daemon
+# socket is 0660 root:nix-users; ignored on Fedora, which has no such group.
+# The playbook usually runs under `become`, so the invoking user cannot be detected: list them.
+nix_users: []
+
+# nix_config_file: Main configuration file shipped by the package
+nix_config_file: /etc/nix/nix.conf
+
+# nix_managed_config_file: Settings file owned by this role, pulled in with a single !include line
+nix_managed_config_file: /etc/nix/nix.workstation.conf
+
+# nix_settings: Settings written to nix_managed_config_file, as `name: value`.
+# The extra- prefix appends to the packaged value, so these are safe where the package already sets them.
+# trusted-users is deliberately absent: it is equivalent to root.
+nix_settings:
+  sandbox: "true"
+  extra-experimental-features: nix-command flakes
+  extra-nix-path: nixpkgs=flake:nixpkgs
+
+# nix_ssl_cert_file: CA bundle used by the daemon for HTTPS. Empty = per-family value from vars/main.yml.
+# openSUSE's package does not set it; Fedora's already does.
+nix_ssl_cert_file: ""
+
+# nix_smoke_test: After setup, run `nix store info` as the first nix_users entry
+nix_smoke_test: false
