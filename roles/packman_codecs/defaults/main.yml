@@ -1,18 +1,19 @@
 ---
 packman_codecs_enable: true
-packman_codecs_repo_name: packman
-packman_codecs_repo_url: "https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/"
-packman_codecs_gpgkey: "https://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Tumbleweed/repodata/repomd.xml.key"
+# Third-party codec repository the multimedia packages are switched to.
+# Defaults to VideoLAN (Packman is announced to end on 2027-01-01).
+packman_codecs_repo_name: videolan
+packman_codecs_repo_url: "https://download.videolan.org/SuSE/Tumbleweed/"
 packman_codecs_priority: 90
-# Packages switched to the Packman build (vendor change allowed).
-packman_codecs_packages:
-  - ffmpeg
+# Installed ffmpeg library packages (versioned, e.g. libavcodec62) are switched
+# to the repository; this matches their names.
+packman_codecs_lib_regex: "^(libavcodec|libavdevice|libavfilter|libavformat|libavutil|libswresample|libswscale|libpostproc)[0-9]"
+# Packages installed from the repository alongside the ffmpeg libraries.
+packman_codecs_extra_packages:
   - gstreamer-plugins-libav
-  - libavcodec
-  - libavdevice
-  - libavfilter
-  - libavformat
-  - libavutil
-  - libswresample
-  - libswscale
   - vlc-codec-gstreamer
+# Packages whose names carry a soname and can drift; a missing one only warns.
+packman_codecs_optional_packages:
+  - libfdk-aac2
+  - libx264-165
+  - libx265-216
