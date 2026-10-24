@@ -1,0 +1,50 @@
+#SPDX-License-Identifier: MIT-0
+---
+# openSUSE's unit makes systemd (init_t) create the daemon socket under /var/lib/nix, which is
+# var_lib_t; the policy denies `create`/`unlink` on a sock_file there, so the socket fails with
+# "Permission denied". Labelling the socket directory var_run_t (runtime state) lets it bind.
+- name: Look for semanage
+  ansible.builtin.stat:
+    path: /usr/sbin/semanage
+  register: nix_semanage
+
+- name: Warn when the socket directory cannot be relabelled
+  ansible.builtin.debug:
+    msg: >-
+      semanage is not installed: cannot label {{ nix_family_selinux_socket_dir }} as
+      {{ nix_selinux_socket_type }}, so nix-daemon.socket may fail with "Permission denied" under SELinux.
+  when: not nix_semanage.stat.exists
+
+- name: Relabel the Nix daemon socket directory
+  when: nix_semanage.stat.exists
+  block:
+    - name: List local SELinux file context customisations
+      ansible.builtin.command:
+        argv: [semanage, fcontext, --list, --locallist]
+      register: nix_fcontext_list
+      changed_when: false
+
+    - name: Label the socket directory for the daemon socket
+      ansible.builtin.command:
+        argv:
+          - semanage
+          - fcontext
+          - --add
+          - --type
+          - "{{ nix_selinux_socket_type }}"
+          - "{{ nix_family_selinux_socket_dir }}(/.*)?"
+      changed_when: true
+      when: (nix_family_selinux_socket_dir ~ '(/.*)?') not in nix_fcontext_list.stdout
+
+    - name: Look for the socket directory
+      ansible.builtin.stat:
+        path: "{{ nix_family_selinux_socket_dir }}"
+      register: nix_socket_dir
+
+    # Created by the package's tmpfiles scriptlet, so absent in check mode on a fresh host.
+    - name: Apply the label to the existing socket directory
+      ansible.builtin.command:
+        argv: [restorecon, -Rv, "{{ nix_family_selinux_socket_dir }}"]
+      register: nix_restorecon
+      changed_when: nix_restorecon.stdout | length > 0
+      when: nix_socket_dir.stat.exists
