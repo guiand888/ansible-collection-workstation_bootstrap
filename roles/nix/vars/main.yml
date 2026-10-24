@@ -33,8 +33,15 @@ nix_ssl_cert_file_by_family:
   RedHat: /etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
   Suse: /etc/ssl/ca-bundle.pem
 
+# Where the packaged unit puts the daemon socket when SELinux needs it relabelled. Fedora's
+# socketless service needs nothing.
+nix_selinux_socket_dir_by_family:
+  RedHat: ""
+  Suse: /var/lib/nix/nix/daemon-socket
+
 nix_family_packages: "{{ nix_packages_by_family[ansible_facts['os_family']] }}"
 nix_family_unit: "{{ nix_unit_by_family[ansible_facts['os_family']] }}"
+nix_family_selinux_socket_dir: "{{ nix_selinux_socket_dir_by_family[ansible_facts['os_family']] }}"
 nix_family_group_required: "{{ nix_group_required_by_family[ansible_facts['os_family']] }}"
 
 nix_effective_ssl_cert_file: >-

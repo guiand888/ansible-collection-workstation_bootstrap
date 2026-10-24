@@ -1,7 +1,7 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # defaults file for nix
-# Distro-packaged, multi-user (daemon) Nix. No upstream installer, SELinux is left alone.
+# Distro-packaged, multi-user (daemon) Nix. No upstream installer, SELinux stays enforcing.
 
 # nix_enable: Whether to run this role at all
 nix_enable: true
@@ -11,6 +11,12 @@ nix_manage_config: true
 
 # nix_enable_service: Enable and start the Nix daemon unit
 nix_enable_service: true
+
+# nix_selinux_relabel_socket: On openSUSE with SELinux enabled, label the daemon socket directory
+# nix_selinux_socket_type so systemd may create the socket. Without it the socket fails with
+# "Permission denied": the policy has no nix module. Remove once openSUSE ships one.
+nix_selinux_relabel_socket: true
+nix_selinux_socket_type: var_run_t
 
 # nix_users: Users added to the nix-users group. Required on openSUSE, where the daemon
 # socket is 0660 root:nix-users; ignored on Fedora, which has no such group.

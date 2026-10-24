@@ -12,7 +12,8 @@ Installs and configures the distro-packaged, multi-user (daemon) Nix on Fedora a
 1. Installs the packages: Fedora `nix`, `nix-daemon`, `nix-legacy` (the last two are only weak dependencies, so they are named); openSUSE `nix` (single package).
 2. Writes `/etc/nix/nix.workstation.conf` from `nix_settings` and adds one `!include` line to the packaged `/etc/nix/nix.conf`, which is otherwise left as shipped. Defaults: `sandbox = true`, `extra-experimental-features = nix-command flakes`, `extra-nix-path = nixpkgs=flake:nixpkgs`, plus `ssl-cert-file` per distro. `extra-` keys append, so they are harmless where the package already sets them (Fedora). `trusted-users` is deliberately not set (root-equivalent).
 3. openSUSE only: adds `nix_users` to the `nix-users` group. The daemon socket is `0660 root:nix-users` there, so membership is mandatory. Fedora has no such group.
-4. Enables and starts the daemon: `nix-daemon.service` on Fedora, `nix-daemon.socket` on openSUSE.
+4. openSUSE with SELinux enabled: labels `/var/lib/nix/nix/daemon-socket` as `var_run_t` (`semanage fcontext` + `restorecon`). The policy has no nix module, so without this systemd is denied creating the socket (`avc: denied { create } ... init_t ... var_lib_t ... sock_file`). Disable with `nix_selinux_relabel_socket: false`.
+5. Enables and starts the daemon: `nix-daemon.service` on Fedora, `nix-daemon.socket` on openSUSE.
 
 Log out and in afterwards for `/etc/profile.d/nix*.sh` and group membership.
 
@@ -25,6 +26,8 @@ See `defaults/main.yml`.
 | `nix_enable` | `true` |
 | `nix_manage_config` | `true` |
 | `nix_enable_service` | `true` |
+| `nix_selinux_relabel_socket` | `true` |
+| `nix_selinux_socket_type` | `var_run_t` |
 | `nix_users` | `[]` (set it on openSUSE) |
 | `nix_settings` | sandbox, flakes, nixpkgs path |
 | `nix_ssl_cert_file` | `""` (per-distro default) |

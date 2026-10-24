@@ -19,6 +19,13 @@
       ansible.builtin.include_tasks: users.ansible.yml
       when: nix_family_group_required | bool
 
+    - name: Include tasks to label the Nix daemon socket for SELinux
+      ansible.builtin.include_tasks: selinux.ansible.yml
+      when:
+        - nix_selinux_relabel_socket | bool
+        - nix_family_selinux_socket_dir | length > 0
+        - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
+
     - name: Include tasks to enable the Nix daemon
       ansible.builtin.include_tasks: service.ansible.yml
       when: nix_enable_service | bool
