@@ -19,11 +19,13 @@ firefox_flatpak_migrate_profile: true
 
 # firefox_flatpak_rpm_profile_path: Path to RPM Firefox profiles
 # Typical path: /home/username/.mozilla/firefox
-firefox_flatpak_rpm_profile_path: "{{ ansible_env.HOME }}/.mozilla/firefox"
+# HOME is read on the controller (the invoking user, localhost run) because
+# ansible_facts['env']['HOME'] resolves to /root when tasks run with become.
+firefox_flatpak_rpm_profile_path: "{{ lookup('ansible.builtin.env', 'HOME') }}/.mozilla/firefox"
 
 # firefox_flatpak_flatpak_profile_path: Path to Flatpak Firefox profiles
 # Typical path: /home/username/.var/app/org.mozilla.firefox/.mozilla/firefox
-firefox_flatpak_flatpak_profile_path: "{{ ansible_env.HOME }}/.var/app/org.mozilla.firefox/.mozilla/firefox"
+firefox_flatpak_flatpak_profile_path: "{{ lookup('ansible.builtin.env', 'HOME') }}/.var/app/org.mozilla.firefox/.mozilla/firefox"
 
 # Native browser packages removed when firefox_flatpak_remove_rpm is true.
 # Override per distro (e.g. MozillaFirefox on openSUSE).
