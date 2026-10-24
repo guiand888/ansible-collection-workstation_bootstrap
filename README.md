@@ -34,7 +34,6 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `gnome_extensions` - Install GNOME Shell extensions
 - `ffmpeg_full` - Switch to full FFmpeg with codecs (Fedora)
 - `packman_codecs` - Switch ffmpeg libraries and codec extras to a third-party repository, VideoLAN by default (openSUSE)
-  Also installs `pipewire-aptx` from Packman (aptX Bluetooth); Packman ends on 2027-01-01, then set `packman_codecs_aptx: false`.
 
 ### Flatpak Applications
 - `flatpak` - Install Flatpak applications
