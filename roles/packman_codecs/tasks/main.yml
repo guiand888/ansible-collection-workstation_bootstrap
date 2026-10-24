@@ -1,13 +1,13 @@
 ---
-# openSUSE counterpart of ffmpeg_full: add Packman and switch the multimedia
-# packages to its builds.
-- name: Configure Packman codecs
+# openSUSE counterpart of ffmpeg_full: add a third-party codec repository and
+# switch the installed ffmpeg libraries to its builds (HEVC, x264/x265, fdk-aac).
+- name: Configure codec repository
   when:
     - packman_codecs_enable | bool
     - ansible_facts['pkg_mgr'] == 'zypper'
   become: true
   block:
-    - name: Add the Packman repository
+    - name: Add the codec repository
       community.general.zypper_repository:
         name: "{{ packman_codecs_repo_name }}"
         repo: "{{ packman_codecs_repo_url }}"
@@ -16,10 +16,52 @@
         state: present
         runrefresh: true
 
-    - name: Switch multimedia packages to Packman
+    - name: List installed ffmpeg library packages
+      ansible.builtin.command:
+        argv: [rpm, -qa, --qf, '%{NAME} %{VERSION}\n', 'libav*', 'libsw*', 'libpostproc*']
+      register: packman_codecs_installed
+      changed_when: false
+
+    - name: Work out the ffmpeg libraries and major version
+      ansible.builtin.set_fact:
+        packman_codecs_libs: >-
+          {{ packman_codecs_installed.stdout_lines
+             | map('regex_replace', ' .*$', '')
+             | select('match', packman_codecs_lib_regex) | list }}
+        packman_codecs_ffmpeg_major: >-
+          {{ (packman_codecs_installed.stdout_lines
+              | select('match', '^libavcodec[0-9]') | first | default(''))
+             .split(' ')[-1].split('.')[0] }}
+
+    - name: Skip when no ffmpeg libraries are installed
+      ansible.builtin.debug:
+        msg: "No libavcodec<N> package installed, skipping the codec switch."
+      when: packman_codecs_ffmpeg_major == ''
+
+    - name: Switch multimedia packages to the codec repository
+      when: packman_codecs_ffmpeg_major != ''
       ansible.builtin.command:
         cmd: >-
           zypper --non-interactive install --from {{ packman_codecs_repo_name }}
-          --allow-vendor-change {{ packman_codecs_packages | join(' ') }}
+          --allow-vendor-change {{ packman_codecs_libs | join(' ') }}
+          ffmpeg-{{ packman_codecs_ffmpeg_major }}
+          {{ packman_codecs_extra_packages | join(' ') }}
       register: packman_codecs_switch
       changed_when: "'Nothing to do' not in packman_codecs_switch.stdout"
+
+    - name: Install optional codec libraries
+      when: packman_codecs_ffmpeg_major != ''
+      ansible.builtin.command:
+        cmd: >-
+          zypper --non-interactive install --from {{ packman_codecs_repo_name }}
+          --allow-vendor-change {{ packman_codecs_optional_packages | join(' ') }}
+      register: packman_codecs_optional
+      changed_when: "'Nothing to do' not in packman_codecs_optional.stdout and packman_codecs_optional.rc == 0"
+      failed_when: packman_codecs_optional.rc not in [0, 104]
+
+    - name: Warn about optional codec libraries that could not be resolved
+      ansible.builtin.debug:
+        msg: "Optional codec packages not found in the repository (names may have drifted): {{ packman_codecs_optional.stderr }}"
+      when:
+        - packman_codecs_optional is not skipped
+        - packman_codecs_optional.rc == 104
