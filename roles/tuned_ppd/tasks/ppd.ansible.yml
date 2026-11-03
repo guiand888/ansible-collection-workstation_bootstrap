@@ -1,0 +1,38 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Enable and start tuned-ppd
+  ansible.builtin.systemd_service:
+    name: tuned-ppd.service
+    enabled: true
+    state: started
+  register: tuned_ppd_ppd_service
+
+# The play usually runs with ignore_errors, so check the end state: both API names must be
+# owned by tuned-ppd (and not by a leftover power-profiles-daemon).
+- name: Flush handlers so a changed mapping is live before the check
+  ansible.builtin.meta: flush_handlers
+
+- name: List the owners of the power-profiles D-Bus names
+  ansible.builtin.command:
+    argv: [busctl, --system, --no-legend, list]
+  register: tuned_ppd_bus
+  changed_when: false
+  failed_when: false
+  until: >-
+    tuned_ppd_bus.stdout is search('(?m)^net\.hadess\.PowerProfiles\s+\d+\s+tuned-ppd\b') and
+    tuned_ppd_bus.stdout is search('(?m)^org\.freedesktop\.UPower\.PowerProfiles\s+\d+\s+tuned-ppd\b')
+  retries: 5
+  delay: 2
+  when: not ansible_check_mode
+
+- name: Check tuned-ppd owns the power-profiles API
+  ansible.builtin.assert:
+    that:
+      - tuned_ppd_bus.stdout is search('(?m)^net\.hadess\.PowerProfiles\s+\d+\s+tuned-ppd\b')
+      - tuned_ppd_bus.stdout is search('(?m)^org\.freedesktop\.UPower\.PowerProfiles\s+\d+\s+tuned-ppd\b')
+    fail_msg: >-
+      tuned-ppd does not own net.hadess.PowerProfiles / org.freedesktop.UPower.PowerProfiles.
+      Check `systemctl status tuned-ppd`, `/var/log/tuned/tuned-ppd.log` and
+      `ls -Z {{ tuned_ppd_log_dir }}` (expected tuned_log_t).
+    quiet: true
+  when: not ansible_check_mode

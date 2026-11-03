@@ -1,0 +1,10 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Write the tuned-ppd profile mapping
+  ansible.builtin.template:
+    src: ppd.conf.j2
+    dest: "{{ tuned_ppd_conf_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart tuned-ppd

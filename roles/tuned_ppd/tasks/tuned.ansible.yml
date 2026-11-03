@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Starting tuned makes the daemon create the log directory (a %ghost in the RPM).
+- name: Enable and start tuned
+  ansible.builtin.systemd_service:
+    name: tuned.service
+    enabled: true
+    state: started

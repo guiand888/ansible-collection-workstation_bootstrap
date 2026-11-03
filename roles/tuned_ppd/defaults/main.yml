@@ -1,0 +1,52 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for tuned_ppd
+# Power profiles (Settings > Power, quick settings) through tuned on openSUSE Tumbleweed.
+# GNOME only speaks the power-profiles-daemon D-Bus API; tuned-ppd translates it to tuned.
+# openSUSE ships neither by default: gnome-control-center has `Recommends: ppd-server`, but the
+# packages provide `ppd-service`, so nothing is pulled in.
+
+# tuned_ppd_enable: Whether to run this role at all
+tuned_ppd_enable: true
+
+# tuned_ppd_packages: Packages that provide the daemon and the D-Bus bridge
+tuned_ppd_packages:
+  - tuned
+  - tuned-ppd
+
+# tuned_ppd_remove_conflicting: Remove tuned_ppd_conflicting_packages first. power-profiles-daemon
+# provides the same `ppd-service` capability and owns the same D-Bus names as tuned-ppd.
+tuned_ppd_remove_conflicting: true
+tuned_ppd_conflicting_packages:
+  - power-profiles-daemon
+
+# tuned_ppd_enable_services: Enable and start tuned, then tuned-ppd
+tuned_ppd_enable_services: true
+
+# tuned_ppd_log_dir: Directory tuned and tuned-ppd log to. The package only ships it as a %ghost,
+# so the daemon creates it at runtime; the SELinux label has to be right before tuned-ppd starts.
+tuned_ppd_log_dir: /var/log/tuned
+
+# tuned_ppd_selinux_relabel: With SELinux enabled, restorecon tuned_ppd_log_dir. Without it
+# tuned-ppd fails at startup with "PermissionError: ... /var/log/tuned/tuned-ppd.log", because the
+# directory was created as var_log_t instead of tuned_log_t.
+tuned_ppd_selinux_relabel: true
+tuned_ppd_restorecon: /usr/sbin/restorecon
+
+# tuned_ppd_manage_conf: Write tuned_ppd_conf_file from the variables below. Off by default: the
+# package ships a working file (default=balanced).
+tuned_ppd_manage_conf: false
+tuned_ppd_conf_file: /etc/tuned/ppd.conf
+tuned_ppd_default_profile: balanced
+tuned_ppd_battery_detection: true
+tuned_ppd_sysfs_acpi_monitor: true
+
+# tuned_ppd_profiles: power-profiles-daemon profile name -> tuned profile
+tuned_ppd_profiles:
+  power-saver: powersave
+  balanced: balanced
+  performance: throughput-performance
+
+# tuned_ppd_battery_profiles: Same mapping, used while on battery. Empty = omit the section.
+tuned_ppd_battery_profiles:
+  balanced: balanced-battery

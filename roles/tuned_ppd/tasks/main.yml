@@ -1,0 +1,48 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for tuned_ppd
+# The order matters: tuned creates the log directory, SELinux must label it, and only then may
+# tuned-ppd start (it opens its log file immediately and exits when SELinux denies it).
+
+- name: Configure tuned power profiles
+  when:
+    - tuned_ppd_enable | bool
+    - ansible_facts['distribution'] == 'openSUSE Tumbleweed'
+  become: true
+  block:
+    - name: Include tasks to install the packages
+      ansible.builtin.include_tasks: packages.ansible.yml
+
+    - name: Include tasks to start tuned
+      ansible.builtin.include_tasks: tuned.ansible.yml
+      when: tuned_ppd_enable_services | bool
+
+    - name: Include tasks to label the log directory for SELinux
+      ansible.builtin.include_tasks: selinux.ansible.yml
+      when:
+        - tuned_ppd_selinux_relabel | bool
+        - ansible_facts['selinux']['status'] | default('disabled') == 'enabled'
+
+    - name: Include tasks to configure tuned-ppd
+      ansible.builtin.include_tasks: config.ansible.yml
+      when: tuned_ppd_manage_conf | bool
+
+    - name: Include tasks to start tuned-ppd
+      ansible.builtin.include_tasks: ppd.ansible.yml
+      when: tuned_ppd_enable_services | bool
+
+    - name: Remind to log in again
+      ansible.builtin.debug:
+        msg: >-
+          tuned-ppd now provides the power-profiles API. If GNOME still shows no Power Mode entry,
+          log out and in again (GNOME may have cached the missing service).
+      when: (tuned_ppd_changed_packages | default(false)) or ((tuned_ppd_ppd_service | default({})) is changed)
+
+- name: Skip tuned_ppd on unsupported OS
+  ansible.builtin.debug:
+    msg: >-
+      tuned_ppd targets openSUSE Tumbleweed, where no power-profiles backend is installed by default
+      (Fedora ships tuned-ppd with GNOME); skipping on {{ ansible_facts['distribution'] }}.
+  when:
+    - tuned_ppd_enable | bool
+    - ansible_facts['distribution'] != 'openSUSE Tumbleweed'
