@@ -1,0 +1,12 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Test user_environment
+  hosts: localhost
+  remote_user: root
+  vars:
+    user_environment_users:
+      - name: guillaume
+        shell: /usr/bin/zsh
+        directories: [Applications, "Nextcloud/Work Files"]
+  roles:
+    - user_environment

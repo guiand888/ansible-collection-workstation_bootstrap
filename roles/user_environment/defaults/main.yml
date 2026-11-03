@@ -1,0 +1,23 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for user_environment
+# Per-user basics that are not packages: login shell and home directory layout.
+# The playbook usually runs under `become`, so the invoking user cannot be detected: list them.
+
+# user_environment_enable: Whether to run this role at all
+user_environment_enable: true
+
+# user_environment_users: Users to configure. Every key except `name` is optional.
+#   name:        login name (must exist)
+#   shell:       absolute path of the login shell; it must be installed and listed in /etc/shells
+#   directories: paths relative to the home directory. Nested paths are fine: every parent is
+#                created and owned by the user too (ansible.builtin.file would leave parents to root).
+# Example:
+#   user_environment_users:
+#     - name: guillaume
+#       shell: /usr/bin/zsh
+#       directories: [Applications, Notes, "Nextcloud/Work Files"]
+user_environment_users: []
+
+# user_environment_directory_mode: Mode of the created directories
+user_environment_directory_mode: "0755"

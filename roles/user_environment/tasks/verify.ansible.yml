@@ -1,0 +1,39 @@
+#SPDX-License-Identifier: MIT-0
+---
+# The play usually runs with ignore_errors, so check the end state explicitly. Skipped in check mode:
+# nothing was changed.
+- name: Read the passwd database again
+  ansible.builtin.getent:
+    database: passwd
+  when: not ansible_check_mode
+
+- name: Check the login shells
+  ansible.builtin.assert:
+    that: getent_passwd[item.name][5] == item.shell
+    fail_msg: "{{ item.name }} still has {{ getent_passwd[item.name][5] }} instead of {{ item.shell }}."
+    quiet: true
+  loop: "{{ user_environment_users | selectattr('shell', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}: {{ item.shell }}"
+  when: not ansible_check_mode
+
+- name: Look for the directories
+  ansible.builtin.stat:
+    path: "{{ getent_passwd[item.user][4] }}/{{ item.rel }}"
+  register: user_environment_dir_stat
+  loop: "{{ user_environment_paths_json | from_json }}"
+  loop_control:
+    label: "{{ item.user }}: {{ item.rel }}"
+  when: not ansible_check_mode
+
+- name: Check the directories exist and belong to their user
+  ansible.builtin.assert:
+    that:
+      - item.stat.isdir | default(false)
+      - item.stat.pw_name | default('') == item.item.user
+    fail_msg: "{{ item.item.rel }} is missing or not owned by {{ item.item.user }}."
+    quiet: true
+  loop: "{{ user_environment_dir_stat.results }}"
+  loop_control:
+    label: "{{ item.item.user }}: {{ item.item.rel }}"
+  when: not ansible_check_mode

@@ -1,0 +1,37 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Read the list of valid login shells
+  ansible.builtin.slurp:
+    src: /etc/shells
+  register: user_environment_etc_shells
+
+- name: Look for the shells
+  ansible.builtin.stat:
+    path: "{{ item.shell }}"
+  register: user_environment_shell_stat
+  loop: "{{ user_environment_users | selectattr('shell', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}: {{ item.shell }}"
+
+# `chsh` refuses shells that are not in /etc/shells; the package normally registers its shell there.
+- name: Check the shells are installed and valid login shells
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+      - item.stat.executable | default(false)
+      - item.item.shell in (user_environment_etc_shells.content | b64decode).splitlines()
+    fail_msg: >-
+      {{ item.item.shell }} is not an installed login shell (missing, not executable or not in /etc/shells):
+      install its package before running user_environment.
+    quiet: true
+  loop: "{{ user_environment_shell_stat.results }}"
+  loop_control:
+    label: "{{ item.item.name }}: {{ item.item.shell }}"
+
+- name: Set the login shells
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+  loop: "{{ user_environment_users | selectattr('shell', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}: {{ item.shell }}"

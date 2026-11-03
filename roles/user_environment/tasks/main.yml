@@ -1,0 +1,28 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for user_environment
+
+- name: Configure user environments
+  when:
+    - user_environment_enable | bool
+    - user_environment_users | length > 0
+  become: true
+  block:
+    - name: Include tasks to validate the role variables
+      ansible.builtin.include_tasks: validate.ansible.yml
+
+    - name: Include tasks to set the login shells
+      ansible.builtin.include_tasks: shell.ansible.yml
+
+    - name: Include tasks to create the directories
+      ansible.builtin.include_tasks: directories.ansible.yml
+
+    - name: Include tasks to check the resulting state
+      ansible.builtin.include_tasks: verify.ansible.yml
+
+- name: Nothing to configure
+  ansible.builtin.debug:
+    msg: "user_environment_users is empty: list the users to configure."
+  when:
+    - user_environment_enable | bool
+    - user_environment_users | length == 0

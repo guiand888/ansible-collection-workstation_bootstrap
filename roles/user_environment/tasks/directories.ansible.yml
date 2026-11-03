@@ -1,0 +1,30 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Every parent of a nested path is listed too: ansible.builtin.file creates missing parents as the
+# invoking user (root under become) and only chowns the leaf, so "Nextcloud/Work" would leave
+# ~/Nextcloud owned by root. The block renders JSON that the next task parses into a list.
+- name: Work out the directories to create, parents first
+  ansible.builtin.set_fact:
+    user_environment_paths_json: >-
+      {%- set ns = namespace(items=[]) -%}
+      {%- for u in user_environment_users -%}
+      {%- for d in u.directories | default([]) -%}
+      {%- set parts = (d | trim('/')).split('/') -%}
+      {%- for i in range(1, parts | length + 1) -%}
+      {%- set entry = {'user': u.name, 'rel': parts[:i] | join('/')} -%}
+      {%- if entry not in ns.items -%}{%- set ns.items = ns.items + [entry] -%}{%- endif -%}
+      {%- endfor -%}
+      {%- endfor -%}
+      {%- endfor -%}
+      {{ ns.items | to_json }}
+
+- name: Create the directories
+  ansible.builtin.file:
+    path: "{{ getent_passwd[item.user][4] }}/{{ item.rel }}"
+    state: directory
+    owner: "{{ item.user }}"
+    group: "{{ getent_passwd[item.user][2] }}"
+    mode: "{{ user_environment_directory_mode }}"
+  loop: "{{ user_environment_paths_json | from_json }}"
+  loop_control:
+    label: "{{ item.user }}: {{ item.rel }}"
