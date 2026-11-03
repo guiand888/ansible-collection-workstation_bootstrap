@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: Guillaume Andre (@guiand888)
+  description: Let named users authenticate to sudo with their own password or fingerprint on openSUSE Tumbleweed
+  company: personal
+
+  license: GPL-3.0-only
+
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: opensuse
+      versions:
+        - all
+
+  galaxy_tags:
+    - sudo
+    - fingerprint
+    - security
+
+dependencies: []

@@ -1,0 +1,26 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for sudo_targetpw
+# openSUSE ships `Defaults targetpw` in /usr/etc/sudoers, so sudo asks for the *target* user's
+# (root's) password. pam_fprintd then runs as root, which has no enrolled finger, and steps aside:
+# a fingerprint is never offered. A per-user `!targetpw` makes sudo authenticate the invoking user.
+# The override is deliberately per named user, never global: the stock `ALL ALL=(ALL) ALL` rule is
+# only safe together with targetpw.
+
+# sudo_targetpw_enable: Whether to run this role at all
+sudo_targetpw_enable: true
+
+# sudo_targetpw_users: Users that authenticate with their own credentials (password or fingerprint).
+# The playbook usually runs under `become`, so the invoking user cannot be detected: list them.
+sudo_targetpw_users: []
+
+# sudo_targetpw_dropin: File name under /etc/sudoers.d. sudo ignores names containing a "." or
+# ending in "~", so neither is allowed here.
+sudo_targetpw_dropin: 10-fingerprint
+
+# sudo_targetpw_visudo: visudo binary used to validate the drop-in before it is installed
+sudo_targetpw_visudo: /usr/sbin/visudo
+
+# sudo_targetpw_check_pam_fprintd: Warn (never change anything) when pam_fprintd is not enabled.
+# PAM itself is owned by the fingerprint driver install (`pam-config -a --fprintd`).
+sudo_targetpw_check_pam_fprintd: true

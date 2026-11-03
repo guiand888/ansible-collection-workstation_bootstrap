@@ -1,0 +1,11 @@
+#SPDX-License-Identifier: MIT-0
+---
+# visudo validates the rendered file before it replaces the drop-in, so a mistake cannot break sudo.
+- name: Install the sudoers drop-in
+  ansible.builtin.template:
+    src: sudoers-targetpw.j2
+    dest: "/etc/sudoers.d/{{ sudo_targetpw_dropin }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "{{ sudo_targetpw_visudo }} -csf %s"

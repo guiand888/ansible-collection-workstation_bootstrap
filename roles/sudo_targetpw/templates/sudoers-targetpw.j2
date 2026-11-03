@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+# openSUSE sets `Defaults targetpw` (sudo asks for root's password, so pam_fprintd never offers a
+# fingerprint). Authenticate these users as themselves instead. Per user, never global.
+{% for user in sudo_targetpw_users %}
+Defaults:{{ user }} !targetpw
+{% endfor %}

@@ -1,0 +1,23 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Check the role variables
+  ansible.builtin.assert:
+    that:
+      - sudo_targetpw_users | length > 0
+      - sudo_targetpw_users | select('match', '^[a-z_][a-z0-9_-]*$') | list | length == sudo_targetpw_users | length
+      - sudo_targetpw_dropin is match('^[A-Za-z0-9_-]+$')
+    fail_msg: >-
+      sudo_targetpw_users must list at least one login name ([a-z_][a-z0-9_-]*), and
+      sudo_targetpw_dropin must not contain a "." or end in "~" (sudo skips such files in /etc/sudoers.d).
+    quiet: true
+
+- name: Read the passwd database
+  ansible.builtin.getent:
+    database: passwd
+
+- name: Check the users exist
+  ansible.builtin.assert:
+    that: item in getent_passwd
+    fail_msg: "sudo_targetpw_users: no such user '{{ item }}'."
+    quiet: true
+  loop: "{{ sudo_targetpw_users }}"
