@@ -22,6 +22,8 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `hostname_config` - Set system hostname
 - `timezone_config` - Configure system timezone
 - `keyboard_config` - Set keyboard layout
+- `user_environment` - Login shell and home directory layout for named users
+- `sudo_targetpw` - Let named users authenticate to sudo with their own password or fingerprint (openSUSE Tumbleweed)
 
 ### Hardware Support
 - `s3_deep_sleep` - Enable S3 deep sleep on Dell XPS
@@ -33,7 +35,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `packages` - Install system packages (dnf or zypper)
 - `gnome_extensions` - Install GNOME Shell extensions
 - `ffmpeg_full` - Switch to full FFmpeg with codecs (Fedora)
-- `packman_codecs` - Switch ffmpeg libraries and codec extras to a third-party repository, VideoLAN by default (openSUSE)
+- `packman_codecs` - Switch ffmpeg libraries and codec extras to a third-party repository, VideoLAN by default, and move anything left on Packman (discontinued 2026-12-31) off it (openSUSE)
 
 ### Flatpak Applications
 - `flatpak` - Install Flatpak applications
@@ -49,6 +51,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 
 ### Service Management
 - `service_management` - Manage systemd services
+- `tuned_ppd` - GNOME power profiles through tuned-ppd, with the SELinux log-directory label fix (openSUSE Tumbleweed)
 
 ## Usage
 
