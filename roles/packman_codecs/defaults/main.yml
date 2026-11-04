@@ -1,7 +1,8 @@
 ---
 packman_codecs_enable: true
 # Third-party codec repository the multimedia packages are switched to.
-# Defaults to VideoLAN (Packman is announced to end on 2027-01-01).
+# Defaults to VideoLAN: Packman is discontinued on 2026-12-31, after which its packages get no
+# updates. The role name is historical and kept so existing playbooks keep working.
 packman_codecs_repo_name: videolan
 packman_codecs_repo_url: "https://download.videolan.org/SuSE/Tumbleweed/"
 packman_codecs_priority: 90
@@ -17,3 +18,25 @@ packman_codecs_optional_packages:
   - libfdk-aac2
   - libx264-165
   - libx265-216
+
+# --- Leaving Packman ---------------------------------------------------------------------------
+# Packages installed from Packman (libx264, VLC, ...) are not ffmpeg libraries, so the switch above
+# never touches them. They are switched to packman_codecs_repo_name, then the Packman repository
+# is removed.
+
+# packman_codecs_switch_legacy_vendor: Switch every installed package whose RPM vendor matches
+# packman_codecs_legacy_vendor_regex to packman_codecs_repo_name. Packman's builds usually sort as
+# *newer* than the VideoLAN ones (date-based versions), so this needs `--oldpackage`.
+packman_codecs_switch_legacy_vendor: true
+# Matched case-insensitively against the RPM vendor, for example "http://packman.links2linux.de".
+packman_codecs_legacy_vendor_regex: "packman"
+
+# packman_codecs_remove_legacy_repos: Remove packman_codecs_legacy_repo_names once the packages
+# have been switched. Set to false to keep Packman until its end date.
+packman_codecs_remove_legacy_repos: true
+packman_codecs_legacy_repo_names:
+  - packman
+
+# packman_codecs_strict: Fail (instead of warning) when packages are still installed from a legacy
+# vendor after the switch, because the repository does not offer them.
+packman_codecs_strict: false

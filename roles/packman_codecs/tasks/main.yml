@@ -4,7 +4,7 @@
 - name: Configure codec repository
   when:
     - packman_codecs_enable | bool
-    - ansible_facts['pkg_mgr'] == 'zypper'
+    - ansible_facts['distribution'] == 'openSUSE Tumbleweed'
   become: true
   block:
     - name: Add the codec repository
@@ -65,3 +65,16 @@
       when:
         - packman_codecs_optional is not skipped
         - packman_codecs_optional.rc == 104
+
+    - name: Include tasks to leave Packman
+      ansible.builtin.include_tasks: legacy.ansible.yml
+      when: packman_codecs_switch_legacy_vendor | bool or packman_codecs_remove_legacy_repos | bool
+
+- name: Skip packman_codecs on unsupported OS
+  ansible.builtin.debug:
+    msg: >-
+      packman_codecs uses the openSUSE Tumbleweed repositories of the codec vendor;
+      skipping on {{ ansible_facts['distribution'] }}.
+  when:
+    - packman_codecs_enable | bool
+    - ansible_facts['distribution'] != 'openSUSE Tumbleweed'

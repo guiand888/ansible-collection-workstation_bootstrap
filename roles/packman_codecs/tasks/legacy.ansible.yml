@@ -1,0 +1,98 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Leave Packman (discontinued on 2026-12-31): move what was installed from it to the codec
+# repository, remove the repository, and report what could not be moved.
+
+- name: Switch packages from a legacy vendor
+  when: packman_codecs_switch_legacy_vendor | bool
+  block:
+    - name: Find the packages installed from a legacy vendor
+      ansible.builtin.include_tasks: legacy_scan.ansible.yml
+
+    # The codec repository may carry several versions of one name (VideoLAN ships VLC 3 and a VLC 4
+    # nightly): unpinned, zypper would try the newest of libvlccore9 and conflict with vlc-noX 3.
+    # So pass 1 pins every package to the version that is installed. Packman's date-based
+    # versions sort *newer* than the repository's, hence --oldpackage.
+    - name: Switch them to the same version from the codec repository
+      ansible.builtin.command:
+        argv: >-
+          {{ ['zypper', '--non-interactive', 'install', '--from', packman_codecs_repo_name,
+              '--allow-vendor-change', '--oldpackage']
+             + (packman_codecs_legacy_lines | map('regex_replace', '^([^\t]+)\t([^\t]+)\t.*$', '\1=\2') | list) }}
+      register: packman_codecs_legacy_pinned
+      changed_when: packman_codecs_legacy_pinned.stdout is search('going to be|going to change vendor')
+      failed_when: packman_codecs_legacy_pinned.rc not in [0, 104]
+      when: packman_codecs_legacy_names | length > 0
+
+    # Pass 2: what the repository builds under another version string (libx264: 20250608.<hash> at
+    # Packman, 0.165 at VideoLAN) is not found by version; take whatever the repository offers.
+    - name: Find the packages still installed from a legacy vendor
+      ansible.builtin.include_tasks: legacy_scan.ansible.yml
+
+    - name: Switch the remaining ones to the codec repository
+      ansible.builtin.command:
+        argv: >-
+          {{ ['zypper', '--non-interactive', 'install', '--from', packman_codecs_repo_name,
+              '--allow-vendor-change', '--oldpackage'] + packman_codecs_legacy_names }}
+      register: packman_codecs_legacy_rest
+      changed_when: packman_codecs_legacy_rest.stdout is search('going to be|going to change vendor')
+      failed_when: packman_codecs_legacy_rest.rc not in [0, 104]
+      when:
+        - packman_codecs_legacy_names | length > 0
+        - not ansible_check_mode
+
+# zypper_repository does not report changes in check mode, so look at what exists first: this also
+# keeps the removal to repositories that are actually configured.
+- name: Look for the legacy repositories
+  community.general.zypper_repository_info:
+  register: packman_codecs_repos
+  when: packman_codecs_remove_legacy_repos | bool
+
+- name: Work out which legacy repositories are configured
+  ansible.builtin.set_fact:
+    packman_codecs_legacy_repos_present: >-
+      {{ packman_codecs_repos.repodatalist | default([]) | map(attribute='alias')
+         | select('in', packman_codecs_legacy_repo_names) | list }}
+  when: packman_codecs_remove_legacy_repos | bool
+
+- name: Remove the legacy repositories
+  community.general.zypper_repository:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ packman_codecs_legacy_repos_present | default([]) }}"
+  when: packman_codecs_remove_legacy_repos | bool
+
+# Commands and the repository module are skipped in check mode, so say what a real run would do.
+- name: Report the pending changes in check mode
+  ansible.builtin.debug:
+    msg: >-
+      Check mode: would switch {{ packman_codecs_legacy_names | default([]) | join(', ') | default('nothing', true) }}
+      to {{ packman_codecs_repo_name }} and remove the repositories
+      {{ packman_codecs_legacy_repos_present | default([]) | join(', ') | default('(none configured)', true) }}.
+  when: ansible_check_mode
+
+# The end state is what matters: whatever still has a legacy vendor now gets no more updates.
+- name: Find the leftovers
+  ansible.builtin.include_tasks: legacy_scan.ansible.yml
+  when: packman_codecs_switch_legacy_vendor | bool and not ansible_check_mode
+
+- name: Warn about packages still installed from a legacy vendor
+  ansible.builtin.debug:
+    msg: >-
+      Still installed from a legacy vendor (no repository carries them, they will not be updated):
+      {{ packman_codecs_legacy_names | join(', ') }}
+  when:
+    - packman_codecs_switch_legacy_vendor | bool
+    - not ansible_check_mode
+    - packman_codecs_legacy_names | default([]) | length > 0
+    - not (packman_codecs_strict | bool)
+
+- name: Fail on packages still installed from a legacy vendor
+  ansible.builtin.assert:
+    that: packman_codecs_legacy_names | default([]) | length == 0
+    fail_msg: "Packages still installed from a legacy vendor: {{ packman_codecs_legacy_names | default([]) | join(', ') }}"
+    quiet: true
+  when:
+    - packman_codecs_switch_legacy_vendor | bool
+    - not ansible_check_mode
+    - packman_codecs_strict | bool

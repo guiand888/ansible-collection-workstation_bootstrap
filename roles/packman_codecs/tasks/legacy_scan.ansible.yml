@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Sets packman_codecs_legacy_lines ("name<TAB>version<TAB>vendor" of every installed package whose
+# vendor matches packman_codecs_legacy_vendor_regex) and packman_codecs_legacy_names.
+- name: List the installed packages with their versions and vendors
+  ansible.builtin.command:
+    argv: [rpm, -qa, --qf, '%{NAME}\t%{VERSION}\t%{VENDOR}\n']
+  register: packman_codecs_vendors
+  changed_when: false
+  check_mode: false
+
+- name: Work out the packages installed from a legacy vendor
+  ansible.builtin.set_fact:
+    packman_codecs_legacy_lines: >-
+      {{ packman_codecs_vendors.stdout_lines
+         | select('search', '^[^\t]+\t[^\t]+\t.*' ~ packman_codecs_legacy_vendor_regex, ignorecase=true)
+         | sort | list }}
+    packman_codecs_legacy_names: >-
+      {{ packman_codecs_vendors.stdout_lines
+         | select('search', '^[^\t]+\t[^\t]+\t.*' ~ packman_codecs_legacy_vendor_regex, ignorecase=true)
+         | map('regex_replace', '\t.*$', '') | sort | list }}
