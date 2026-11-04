@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: Guillaume Andre (@guiand888)
+  description: GNOME power profiles through tuned (tuned-ppd) on openSUSE Tumbleweed
+  company: personal
+
+  license: GPL-3.0-only
+
+  min_ansible_version: "2.12"
+
+  platforms:
+    - name: opensuse
+      versions:
+        - all
+
+  galaxy_tags:
+    - power
+    - tuned
+    - gnome
+
+dependencies: []

@@ -1,0 +1,9 @@
+#SPDX-License-Identifier: MIT-0
+---
+# handlers file for tuned_ppd
+
+- name: Restart tuned-ppd
+  ansible.builtin.systemd_service:
+    name: tuned-ppd.service
+    state: restarted
+  when: tuned_ppd_enable_services | bool

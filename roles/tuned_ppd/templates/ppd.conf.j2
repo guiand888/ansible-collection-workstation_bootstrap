@@ -1,0 +1,20 @@
+# {{ ansible_managed }}
+[main]
+# The default PPD profile
+default={{ tuned_ppd_default_profile }}
+battery_detection={{ tuned_ppd_battery_detection | bool | lower }}
+sysfs_acpi_monitor={{ tuned_ppd_sysfs_acpi_monitor | bool | lower }}
+
+[profiles]
+# PPD = TuneD
+{% for ppd_profile, tuned_profile in tuned_ppd_profiles.items() %}
+{{ ppd_profile }}={{ tuned_profile }}
+{% endfor %}
+{% if tuned_ppd_battery_profiles | length > 0 %}
+
+[battery]
+# PPD = TuneD
+{% for ppd_profile, tuned_profile in tuned_ppd_battery_profiles.items() %}
+{{ ppd_profile }}={{ tuned_profile }}
+{% endfor %}
+{% endif %}

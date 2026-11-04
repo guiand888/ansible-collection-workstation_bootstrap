@@ -1,0 +1,41 @@
+#SPDX-License-Identifier: MIT-0
+---
+# The directory is created by the daemon at runtime as var_log_t, while the policy expects
+# /var/log/tuned(/.*)? to be tuned_log_t. tuned_ppd_t may only create files in a tuned_log_t directory.
+- name: Look for restorecon
+  ansible.builtin.stat:
+    path: "{{ tuned_ppd_restorecon }}"
+  register: tuned_ppd_restorecon_stat
+
+- name: Warn when the log directory cannot be relabelled
+  ansible.builtin.debug:
+    msg: >-
+      {{ tuned_ppd_restorecon }} is not installed (policycoreutils): cannot check the SELinux label of
+      {{ tuned_ppd_log_dir }}, so tuned-ppd may fail with "Permission denied" on its log file.
+  when: not tuned_ppd_restorecon_stat.stat.exists
+
+- name: Relabel the log directory
+  when: tuned_ppd_restorecon_stat.stat.exists
+  block:
+    - name: Make sure the log directory exists
+      ansible.builtin.file:
+        path: "{{ tuned_ppd_log_dir }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    # -n lists what would change without touching anything, so it also runs in check mode and is the
+    # task that reports the change; the real restorecon below is skipped when nothing is wrong.
+    - name: Detect a wrong SELinux label on the log directory
+      ansible.builtin.command:
+        argv: ["{{ tuned_ppd_restorecon }}", -Rnv, "{{ tuned_ppd_log_dir }}"]
+      register: tuned_ppd_label_check
+      changed_when: tuned_ppd_label_check.stdout | length > 0
+      check_mode: false
+
+    - name: Apply the SELinux label to the log directory
+      ansible.builtin.command:
+        argv: ["{{ tuned_ppd_restorecon }}", -Rv, "{{ tuned_ppd_log_dir }}"]
+      changed_when: false
+      when: tuned_ppd_label_check.stdout | length > 0

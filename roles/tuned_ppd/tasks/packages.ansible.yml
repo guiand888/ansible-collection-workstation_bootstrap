@@ -1,0 +1,18 @@
+#SPDX-License-Identifier: MIT-0
+---
+- name: Remove conflicting power-profiles daemons
+  community.general.zypper:
+    name: "{{ tuned_ppd_conflicting_packages }}"
+    state: absent
+  register: tuned_ppd_removed
+  when: tuned_ppd_remove_conflicting | bool
+
+- name: Install tuned and tuned-ppd
+  community.general.zypper:
+    name: "{{ tuned_ppd_packages }}"
+    state: present
+  register: tuned_ppd_installed
+
+- name: Remember whether packages changed
+  ansible.builtin.set_fact:
+    tuned_ppd_changed_packages: "{{ tuned_ppd_installed is changed or tuned_ppd_removed is changed }}"
