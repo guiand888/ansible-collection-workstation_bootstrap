@@ -1,0 +1,27 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for sudo_targetpw
+
+- name: Configure sudo target-password override
+  when:
+    - sudo_targetpw_enable | bool
+    - ansible_facts['distribution'] == 'openSUSE Tumbleweed'
+  become: true
+  block:
+    - name: Include tasks to validate the role variables
+      ansible.builtin.include_tasks: validate.ansible.yml
+
+    - name: Include tasks to install the sudoers drop-in
+      ansible.builtin.include_tasks: dropin.ansible.yml
+
+    - name: Include tasks to check the resulting configuration
+      ansible.builtin.include_tasks: verify.ansible.yml
+
+- name: Skip sudo_targetpw on unsupported OS
+  ansible.builtin.debug:
+    msg: >-
+      sudo_targetpw only applies to openSUSE Tumbleweed, whose sudoers enables targetpw;
+      skipping on {{ ansible_facts['distribution'] }}.
+  when:
+    - sudo_targetpw_enable | bool
+    - ansible_facts['distribution'] != 'openSUSE Tumbleweed'

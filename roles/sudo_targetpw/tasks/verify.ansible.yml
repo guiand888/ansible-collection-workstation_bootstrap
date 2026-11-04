@@ -1,0 +1,55 @@
+#SPDX-License-Identifier: MIT-0
+---
+# The play usually runs with ignore_errors, so check the end state explicitly.
+
+# NOPASSWD rules short-circuit sudo before PAM, so no password or fingerprint is ever asked.
+- name: Look for NOPASSWD rules that would hide the prompt
+  ansible.builtin.find:
+    paths: /etc/sudoers.d
+    patterns: "*"
+    contains: '^[^#]*NOPASSWD'
+    excludes: "{{ sudo_targetpw_dropin }}"
+  register: sudo_targetpw_nopasswd
+
+- name: Warn about NOPASSWD rules
+  ansible.builtin.debug:
+    msg: >-
+      NOPASSWD found in {{ sudo_targetpw_nopasswd.files | map(attribute='path') | join(', ') }}:
+      sudo will not ask for a password or fingerprint while it is in place.
+  when: sudo_targetpw_nopasswd.matched | default(0) > 0
+
+# `sudo -l -U` needs no password when run as root. Skipped in check mode: the drop-in is not written.
+- name: List the effective sudo defaults
+  ansible.builtin.command:
+    argv: [sudo, -n, -l, -U, "{{ item }}"]
+  register: sudo_targetpw_listing
+  changed_when: false
+  when: not ansible_check_mode
+  loop: "{{ sudo_targetpw_users }}"
+
+- name: Check the override is effective
+  ansible.builtin.assert:
+    # The listing keeps every matching Defaults entry in order ("targetpw, !targetpw"); the last one wins.
+    that: item.stdout | regex_findall('(?<![A-Za-z_])(!?)targetpw') | last | default('') == '!'
+    fail_msg: "!targetpw is not the effective setting for {{ item.item }}; check for a later targetpw in /etc/sudoers.d."
+    quiet: true
+  loop: "{{ sudo_targetpw_listing.results | default([]) | rejectattr('skipped', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: Check whether pam_fprintd is enabled
+  ansible.builtin.command:
+    argv: [pam-config, -q, --fprintd]
+  register: sudo_targetpw_pam
+  changed_when: false
+  failed_when: false
+  when: sudo_targetpw_check_pam_fprintd | bool
+
+- name: Warn when pam_fprintd is not enabled
+  ansible.builtin.debug:
+    msg: >-
+      pam_fprintd is not enabled (pam-config -q --fprintd failed): sudo will ask for the user's
+      password, not a fingerprint. The fingerprint driver install normally runs `pam-config -a --fprintd`.
+  when:
+    - sudo_targetpw_check_pam_fprintd | bool
+    - sudo_targetpw_pam.rc | default(0) != 0
