@@ -26,7 +26,7 @@ ansible-galaxy collection install guiand888.workstation_bootstrap
 - `sudo_targetpw` - Let named users authenticate to sudo with their own password or fingerprint (openSUSE Tumbleweed)
 
 ### Hardware Support
-- `s3_deep_sleep` - Enable S3 deep sleep on Dell XPS
+- `s3_deep_sleep` - Persist S3 deep sleep (`mem_sleep_default=deep`) on the kernel command line, on Fedora and openSUSE Tumbleweed
 - `systemd_lid_config` - Systemd lid switch configuration
 - `trezor_udev` - Trezor hardware wallet udev rules
 - `ledger_udev` - Ledger hardware wallet udev rules

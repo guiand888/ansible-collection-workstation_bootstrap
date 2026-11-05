@@ -11,11 +11,13 @@ s3_deep_sleep_mem_sleep_path: "/sys/power/mem_sleep"
 # s3_deep_sleep_mode: Sleep mode to configure ('deep', 's2idle', 'shallow')
 s3_deep_sleep_mode: "deep"
 
-# s3_deep_sleep_update_grub: Whether to update GRUB configuration after change
-s3_deep_sleep_update_grub: true
+# s3_deep_sleep_manage_kernel_cmdline: Persist mem_sleep_default=<mode> on the kernel command line
+# (grubby on Fedora; /etc/kernel/cmdline or /etc/default/grub on openSUSE, depending on the bootloader).
+# Without it the sysfs write below is lost at the next boot.
+s3_deep_sleep_manage_kernel_cmdline: true
 
-# s3_deep_sleep_grub_config_path: Path to GRUB configuration file
-s3_deep_sleep_grub_config_path: "/boot/efi/EFI/fedora/grub.cfg"
+# s3_deep_sleep_apply_runtime: Also write the mode to the mem_sleep sysfs file so it applies without a reboot
+s3_deep_sleep_apply_runtime: true
 
-# s3_deep_sleep_check_current: Whether to check current setting before applying
+# s3_deep_sleep_check_current: Whether to check current setting before applying at runtime
 s3_deep_sleep_check_current: true

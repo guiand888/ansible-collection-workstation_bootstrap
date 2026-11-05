@@ -1,0 +1,139 @@
+---
+# Child task file: configure_kernel_cmdline.ansible.yml
+# Persists mem_sleep_default=<mode> on the kernel command line. Every mem_sleep_default= token is rewritten
+# (stale ones are dropped), other arguments are left untouched. Same approach as zswap_config.
+#
+# Fedora (BLS): grubby rewrites the existing boot entries and also updates /etc/kernel/cmdline and
+#   GRUB_CMDLINE_LINUX in /etc/default/grub, so future kernels pick the argument up. grub2-mkconfig
+#   would NOT rewrite BLS entries.
+# openSUSE: depends on the bootloader (LOADER_TYPE in /etc/sysconfig/bootloader).
+
+- name: Configure the kernel command line with grubby
+  when: ansible_facts['os_family'] == 'RedHat'
+  block:
+    - name: Check for /etc/kernel/cmdline
+      ansible.builtin.stat:
+        path: /etc/kernel/cmdline
+      register: s3_deep_sleep_kernel_cmdline_stat
+
+    - name: Read the command line used for new kernels
+      ansible.builtin.slurp:
+        src: "{{ '/etc/kernel/cmdline' if s3_deep_sleep_kernel_cmdline_stat.stat.exists else '/proc/cmdline' }}"
+      register: s3_deep_sleep_cmdline_raw
+
+    - name: Compute current mem_sleep_default arguments
+      ansible.builtin.set_fact:
+        s3_deep_sleep_cmdline_current: >-
+          {{ (s3_deep_sleep_cmdline_raw.content | b64decode).split() | select('match', '^mem_sleep_default=') | list }}
+        s3_deep_sleep_cmdline_needs_update: >-
+          {{ (s3_deep_sleep_cmdline_raw.content | b64decode).split() | select('match', '^mem_sleep_default=') | list | sort
+             != s3_deep_sleep_cmdline_wanted | sort }}
+
+    - name: Remove stale mem_sleep_default argument with grubby
+      ansible.builtin.command:
+        argv:
+          - grubby
+          - --update-kernel=ALL
+          - --remove-args=mem_sleep_default
+      when:
+        - s3_deep_sleep_cmdline_current | length > 0
+        - s3_deep_sleep_cmdline_needs_update | bool
+      changed_when: true
+
+    - name: Add mem_sleep_default argument with grubby
+      ansible.builtin.command:
+        argv:
+          - grubby
+          - --update-kernel=ALL
+          - "--args={{ s3_deep_sleep_cmdline_wanted | join(' ') }}"
+      when: s3_deep_sleep_cmdline_needs_update | bool
+      changed_when: true
+
+    - name: Display grubby message
+      ansible.builtin.debug:
+        msg: >-
+          Kernel command line {{ ('would be updated: ' if ansible_check_mode else 'updated: ') ~ (s3_deep_sleep_cmdline_wanted | join(' '))
+          if s3_deep_sleep_cmdline_needs_update | bool else 'already up to date' }}
+
+- name: Configure the kernel command line on openSUSE
+  when: ansible_facts['os_family'] == 'Suse'
+  block:
+    - name: Read the bootloader configuration
+      ansible.builtin.slurp:
+        src: /etc/sysconfig/bootloader
+      register: s3_deep_sleep_bootloader_raw
+      failed_when: false
+
+    - name: Detect the bootloader type
+      ansible.builtin.set_fact:
+        s3_deep_sleep_loader_type: >-
+          {{ (s3_deep_sleep_bootloader_raw.content | default('') | b64decode
+              | regex_search('(?m)^LOADER_TYPE="?([^"\s]*)', '\1')) | default([''], true) | first }}
+
+    - name: Fail on an unrecognised bootloader
+      ansible.builtin.fail:
+        msg: >-
+          Unsupported or undetected bootloader '{{ s3_deep_sleep_loader_type }}' (LOADER_TYPE in /etc/sysconfig/bootloader).
+          Supported: grub2, grub2-efi, grub2-bls, systemd-boot. Set s3_deep_sleep_manage_kernel_cmdline: false and add
+          {{ s3_deep_sleep_cmdline_wanted | join(' ') }} to the kernel command line manually.
+      when: s3_deep_sleep_loader_type not in ['grub2', 'grub2-efi', 'grub2-bls', 'systemd-boot']
+
+    - name: Configure GRUB2 kernel arguments
+      when: s3_deep_sleep_loader_type in ['grub2', 'grub2-efi']
+      block:
+        - name: Read /etc/default/grub
+          ansible.builtin.slurp:
+            src: /etc/default/grub
+          register: s3_deep_sleep_default_grub
+
+        - name: Compute the current GRUB_CMDLINE_LINUX_DEFAULT
+          ansible.builtin.set_fact:
+            s3_deep_sleep_grub_current: >-
+              {{ ((s3_deep_sleep_default_grub.content | b64decode
+                   | regex_search('(?m)^GRUB_CMDLINE_LINUX_DEFAULT="([^"]*)"', '\1')) | default([''], true) | first).split() }}
+
+        - name: Set GRUB_CMDLINE_LINUX_DEFAULT
+          ansible.builtin.lineinfile:
+            path: /etc/default/grub
+            regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+            line: >-
+              GRUB_CMDLINE_LINUX_DEFAULT="{{ (s3_deep_sleep_grub_current | reject('match', '^mem_sleep_default=') | list
+              + s3_deep_sleep_cmdline_wanted) | join(' ') }}"
+          when: >-
+            s3_deep_sleep_grub_current | select('match', '^mem_sleep_default=') | list | sort
+            != s3_deep_sleep_cmdline_wanted | sort
+          notify: Refresh openSUSE GRUB2 configuration
+
+    - name: Configure BLS / systemd-boot kernel arguments
+      when: s3_deep_sleep_loader_type in ['grub2-bls', 'systemd-boot']
+      block:
+        - name: Check for /etc/kernel/cmdline
+          ansible.builtin.stat:
+            path: /etc/kernel/cmdline
+          register: s3_deep_sleep_kernel_cmdline_stat
+
+        - name: Fail if /etc/kernel/cmdline is missing
+          ansible.builtin.fail:
+            msg: /etc/kernel/cmdline not found; cannot manage the kernel command line for {{ s3_deep_sleep_loader_type }}.
+          when: not s3_deep_sleep_kernel_cmdline_stat.stat.exists
+
+        - name: Read /etc/kernel/cmdline
+          ansible.builtin.slurp:
+            src: /etc/kernel/cmdline
+          register: s3_deep_sleep_cmdline_raw
+
+        - name: Compute current kernel arguments
+          ansible.builtin.set_fact:
+            s3_deep_sleep_cmdline_all: "{{ (s3_deep_sleep_cmdline_raw.content | b64decode).split() }}"
+
+        - name: Rewrite mem_sleep_default in /etc/kernel/cmdline
+          ansible.builtin.copy:
+            dest: /etc/kernel/cmdline
+            owner: root
+            group: root
+            mode: "0644"
+            content: "{{ (s3_deep_sleep_cmdline_all | reject('match', '^mem_sleep_default=') | list + s3_deep_sleep_cmdline_wanted) | join(' ') }}\n"
+          when: >-
+            s3_deep_sleep_cmdline_all | select('match', '^mem_sleep_default=') | list | sort
+            != s3_deep_sleep_cmdline_wanted | sort
+          notify: Update openSUSE BLS boot entries
