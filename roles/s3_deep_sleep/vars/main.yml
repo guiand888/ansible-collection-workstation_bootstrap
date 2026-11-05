@@ -1,3 +1,18 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # vars file for s3_deep_sleep
+
+# Fedora (RedHat family) and openSUSE Tumbleweed (Suse family) are supported.
+s3_deep_sleep_supported_os_families:
+  - RedHat
+  - Suse
+
+# Values accepted by the mem_sleep_default= kernel parameter.
+s3_deep_sleep_valid_modes:
+  - deep
+  - s2idle
+  - shallow
+
+# Kernel command line arguments this role owns.
+s3_deep_sleep_cmdline_wanted:
+  - "mem_sleep_default={{ s3_deep_sleep_mode }}"

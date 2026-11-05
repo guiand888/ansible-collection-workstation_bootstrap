@@ -1,64 +1,54 @@
 ---
 # Child task file: configure_s3_sleep.ansible.yml
-# This file handles the configuration of S3 deep sleep mode
+# Applies the sleep mode to the running system. Not persistent on its own: configure_kernel_cmdline.ansible.yml
+# makes it survive a reboot.
 
 - name: Check if mem_sleep sysfs file exists
   ansible.builtin.stat:
     path: "{{ s3_deep_sleep_mem_sleep_path }}"
-  register: mem_sleep_file
-  # Check if the system supports sleep mode configuration
+  register: s3_deep_sleep_mem_sleep_file
 
 - name: Read current sleep mode configuration
   ansible.builtin.slurp:
     src: "{{ s3_deep_sleep_mem_sleep_path }}"
-  register: current_sleep_mode
-  when: 
-    - mem_sleep_file.stat.exists
-    - s3_deep_sleep_check_current | bool
-  # Read current setting to determine if change is needed
+  register: s3_deep_sleep_current_raw
+  when: s3_deep_sleep_mem_sleep_file.stat.exists
 
-- name: Parse current sleep mode
+- name: Parse available and active sleep modes
   ansible.builtin.set_fact:
-    current_active_mode: "{{ (current_sleep_mode.content | b64decode).split() | select('match', '\\[.*\\]') | first | regex_replace('[\\[\\]]', '') }}"
-  when: 
-    - current_sleep_mode is defined
-    - current_sleep_mode.content is defined
-  # Extract the currently active mode (surrounded by square brackets)
+    s3_deep_sleep_available_modes: >-
+      {{ (s3_deep_sleep_current_raw.content | b64decode).split() | map('regex_replace', '[\[\]]', '') | list }}
+    s3_deep_sleep_active_mode: >-
+      {{ (s3_deep_sleep_current_raw.content | b64decode).split() | select('match', '^\[.*\]$')
+         | map('regex_replace', '[\[\]]', '') | first | default('unknown') }}
+  when: s3_deep_sleep_mem_sleep_file.stat.exists
 
 - name: Display current sleep mode
   ansible.builtin.debug:
-    msg: "Current sleep mode: {{ current_active_mode | default('unknown') }}"
+    msg: "Current sleep mode: {{ s3_deep_sleep_active_mode | default('unknown') }} (available: {{ s3_deep_sleep_available_modes | default([]) | join(', ') }})"
   when: s3_deep_sleep_check_current | bool
 
-- name: Configure S3 deep sleep mode
+- name: Warn when the firmware does not offer the requested mode
+  ansible.builtin.debug:
+    msg: >-
+      '{{ s3_deep_sleep_mode }}' is not offered by {{ s3_deep_sleep_mem_sleep_path }}
+      ({{ s3_deep_sleep_available_modes | join(', ') }}); the firmware may only expose s2idle. Skipping the runtime write.
+  when:
+    - s3_deep_sleep_available_modes is defined
+    - s3_deep_sleep_mode not in s3_deep_sleep_available_modes
+
+- name: Apply the sleep mode at runtime
   ansible.builtin.shell:
     cmd: "echo {{ s3_deep_sleep_mode }} > {{ s3_deep_sleep_mem_sleep_path }}"
-  become: true
-  when: 
-    - mem_sleep_file.stat.exists
-    - current_active_mode is not defined or current_active_mode != s3_deep_sleep_mode
-  register: sleep_mode_changed
-  # Only change if current mode is different from desired mode
-
-- name: Update GRUB configuration
-  ansible.builtin.command:
-    cmd: grub2-mkconfig -o {{ s3_deep_sleep_grub_config_path }}
-  become: true
-  when: 
-    - s3_deep_sleep_update_grub | bool
-    - sleep_mode_changed is changed
-  register: grub_updated
-  # Only update GRUB if sleep mode was actually changed
-
-- name: Display configuration completion message
-  ansible.builtin.debug:
-    msg: "S3 deep sleep configured successfully. Mode: {{ s3_deep_sleep_mode }}"
-  when: sleep_mode_changed is changed
+  when:
+    - s3_deep_sleep_available_modes is defined
+    - s3_deep_sleep_mode in s3_deep_sleep_available_modes
+    - s3_deep_sleep_active_mode != s3_deep_sleep_mode
+  changed_when: true
 
 - name: Display no-change message
   ansible.builtin.debug:
-    msg: "S3 deep sleep already configured with mode: {{ current_active_mode }}"
-  when: 
-    - current_active_mode is defined
-    - current_active_mode == s3_deep_sleep_mode
-    - sleep_mode_changed is not changed
+    msg: "Sleep mode already {{ s3_deep_sleep_mode }} at runtime"
+  when:
+    - s3_deep_sleep_active_mode is defined
+    - s3_deep_sleep_active_mode == s3_deep_sleep_mode

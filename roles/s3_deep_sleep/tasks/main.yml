@@ -2,13 +2,28 @@
 ---
 # tasks file for s3_deep_sleep
 
-- name: Include tasks to configure S3 deep sleep
-  ansible.builtin.include_tasks: configure_s3_sleep.ansible.yml
+- name: Configure S3 deep sleep
   when:
     - s3_deep_sleep_enable | bool
-    - ansible_facts['distribution'] == 'Fedora'  # GRUB path is Fedora's; not ported to other distros
+    - ansible_facts['os_family'] in s3_deep_sleep_supported_os_families
+  become: true
+  block:
+    - name: Validate the requested sleep mode
+      ansible.builtin.assert:
+        that: s3_deep_sleep_mode in s3_deep_sleep_valid_modes
+        fail_msg: "s3_deep_sleep_mode must be one of {{ s3_deep_sleep_valid_modes | join(', ') }} (got '{{ s3_deep_sleep_mode }}')"
 
-- name: Skip S3 deep sleep on non-Fedora
+    - name: Include tasks to persist the sleep mode on the kernel command line
+      ansible.builtin.include_tasks: configure_kernel_cmdline.ansible.yml
+      when: s3_deep_sleep_manage_kernel_cmdline | bool
+
+    - name: Include tasks to apply the sleep mode at runtime
+      ansible.builtin.include_tasks: configure_s3_sleep.ansible.yml
+      when: s3_deep_sleep_apply_runtime | bool
+
+- name: Skip S3 deep sleep on unsupported OS
   ansible.builtin.debug:
-    msg: "s3_deep_sleep is only supported on Fedora; skipping on {{ ansible_facts['distribution'] }}."
-  when: ansible_facts['distribution'] != 'Fedora'
+    msg: "s3_deep_sleep supports Fedora and openSUSE Tumbleweed; skipping on {{ ansible_facts['distribution'] }}."
+  when:
+    - s3_deep_sleep_enable | bool
+    - ansible_facts['os_family'] not in s3_deep_sleep_supported_os_families
